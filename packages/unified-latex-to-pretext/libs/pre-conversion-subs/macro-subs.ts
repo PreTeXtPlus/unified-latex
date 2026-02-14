@@ -84,6 +84,7 @@ export const macroReplacements: Record<
     ),
     textit: factory("em"),
     textbf: factory("alert"),
+    term: factory("term"),
     underline: factory(
         "em",
         `Warning: There is no equivalent tag for \"underline\", \"em\" was used as a replacement.`

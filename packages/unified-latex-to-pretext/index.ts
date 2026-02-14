@@ -3,6 +3,7 @@ export * from "./libs/unified-latex-wrap-pars";
 export * from "./libs/pre-conversion-subs/katex-subs";
 export * from "./libs/wrap-pars";
 export * from "./libs/convert-to-pretext";
+export * from "./libs/provides";
 
 // NOTE: The docstring comment must be the last item in the index.ts file!
 /**
