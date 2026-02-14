@@ -390,6 +390,14 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("converts solution", async () => {
+        html = process(`\\begin{solution}sol\n\\end{solution}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<solution><p>sol</p></solution>`
+            )
+        );
+    });
     it("Gives a theorem a title", async () => {
         html = process(`\\begin{theorem}[My Theorem]\na\n\nb\n\\end{theorem}`);
         expect(await normalizeHtml(html)).toEqual(

@@ -198,6 +198,7 @@ function genEnvironmentReplacements() {
         abstract: { requiresStatment: false, aliases: ["abs", "abstr"] },
         acknowledgement: { requiresStatment: false, aliases: ["ack"] },
         algorithm: { requiresStatment: true, aliases: ["algo", "alg"] },
+        answer: { requiresStatment: false, aliases: ["ans"] },
         assumption: { requiresStatment: true, aliases: ["assu", "ass"] },
         axiom: { requiresStatment: true, aliases: ["axm"] },
         claim: { requiresStatment: true, aliases: ["cla"] },
@@ -223,6 +224,7 @@ function genEnvironmentReplacements() {
         exploration: { requiresStatment: false, aliases: [] },
         fact: { requiresStatment: true, aliases: [] },
         heuristic: { requiresStatment: true, aliases: [] },
+        hint: { requiresStatment: false, aliases: [] },
         hypothesis: { requiresStatment: true, aliases: ["hyp"] },
         identity: { requiresStatment: true, aliases: ["idnty"] },
         insight: { requiresStatment: false, aliases: [] },
@@ -258,6 +260,7 @@ function genEnvironmentReplacements() {
             requiresStatment: true,
             aliases: ["thm", "theo", "theor", "thmss", "thrm"],
         },
+        solution: { requiresStatment: false, aliases: ["sol"] },
         warning: { requiresStatment: false, aliases: ["warn", "wrn"] },
     };
     // For each environment PreTeXt has, we create entries for `environmentReplacements` using all reasonable aliases
