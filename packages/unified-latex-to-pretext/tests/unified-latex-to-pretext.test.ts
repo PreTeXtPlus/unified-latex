@@ -237,7 +237,7 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         // Custom labels are handled
         ast = process(`\\[a\\\\b\\]`);
         expect(await normalizeHtml(ast)).toEqual(
-            await normalizeHtml(`<me>a\\\\b</me>`)
+            await normalizeHtml(`<md>a\\\\b</md>`)
         );
     });
 
@@ -256,7 +256,7 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
 
         ast = process(`x\n\ny\\[a\\\\b\\]z`);
         expect(await normalizeHtml(ast)).toEqual(
-            await normalizeHtml(`<p>x</p><p>y<me>a\\\\b</me>z</p>`)
+            await normalizeHtml(`<p>x</p><p>y<md>a\\\\b</md>z</p>`)
         );
     });
     it("replaces command inside argument", async () => {

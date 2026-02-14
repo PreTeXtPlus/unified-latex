@@ -7,7 +7,7 @@ import {
 import { match } from "@unified-latex/unified-latex-util-match";
 import { wrapPars } from "../wrap-pars";
 import { VisitInfo } from "@unified-latex/unified-latex-util-visit";
-import { VFile } from "unified-lint-rule/lib";
+import { VFile } from "vfile";
 import { makeWarningMessage } from "./utils";
 import { createTableFromTabular } from "./create-table-from-tabular";
 
