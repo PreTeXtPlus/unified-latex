@@ -467,4 +467,35 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("Handles index macros", async () => {
+        html = process(`We can index a term with \\index{my term} or similar.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h></idx> or similar.`
+            )
+        );
+    });
+    it.skip("handles index macros with subheadings, see, and see also", async () => {
+
+        html = process(`We can index a term with \\index{my term!my subterm} for subheadings.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h><h>my subterm</h></idx> for subheadings.`
+            )
+        );
+
+        html = process(`We can index a term with \\index{my term|see {other term}}.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h><see>other term</see></idx> or similar.`
+            )
+        );
+
+        html = process(`We can index a term with \\index{my term|seealso {other term}}.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h><seealso>other term</seealso></idx> or similar.`
+            )
+        );
+    });
 });
