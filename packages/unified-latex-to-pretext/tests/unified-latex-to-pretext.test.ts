@@ -443,4 +443,12 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("Replaces \\term with <term> env", async () => {
+        html = process(`We can write a \\term{specific term} when defining something.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can write a <term>specific term</term> when defining something.`
+            )
+        );
+    });
 });

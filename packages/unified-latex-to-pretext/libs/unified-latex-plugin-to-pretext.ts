@@ -6,12 +6,14 @@ import { TypeGuard } from "@unified-latex/unified-latex-types";
 import { expandUnicodeLigatures } from "@unified-latex/unified-latex-util-ligatures";
 import { match } from "@unified-latex/unified-latex-util-match";
 import { EXIT, visit } from "@unified-latex/unified-latex-util-visit";
+import { attachMacroArgs } from "@unified-latex/unified-latex-util-arguments";
 import { toPretextWithLoggerFactory } from "./pretext-subs/to-pretext";
 import {
     unifiedLatexToPretextLike,
     PluginOptions as HtmlLikePluginOptions,
 } from "./unified-latex-plugin-to-pretext-like";
 import { expandUserDefinedMacros } from "./pre-conversion-subs/expand-user-defined-macros";
+import { macros as pretextMacros } from "./provides";
 
 export type PluginOptions = HtmlLikePluginOptions & {
     /**
@@ -36,6 +38,9 @@ export const unifiedLatexToPretext: Plugin<
 
         // expand user defined macros
         expandUserDefinedMacros(tree);
+
+        // Attach PreTeXt-specific macro arguments
+        attachMacroArgs(tree, pretextMacros);
 
         // If there is a \begin{document}...\end{document}, that's the only
         // content we want to convert.
