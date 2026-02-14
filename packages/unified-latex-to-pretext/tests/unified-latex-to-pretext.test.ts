@@ -410,7 +410,7 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         html = process(`Exercise \\ref{foo} is important`);
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `Exercise <xref ref="foo" text="global"/> is important`
+                `Exercise <xref ref="foo"/> is important`
             )
         );
     });

@@ -136,7 +136,6 @@ export const macroReplacements: Record<
             tag: "xref",
             attributes: {
                 ref: ref || "",
-                text: "global",
             },
         });
     },
