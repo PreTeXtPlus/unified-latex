@@ -414,6 +414,14 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("makes centered text into blockquotes", async () => {
+        html = process(`\\begin{center}\na\n\nb\n\\end{center}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<blockquote><p>a</p><p>b</p></blockquote>`
+            )
+        );
+    });
     it("Replaces \\ref with a xref", async () => {
         html = process(`Exercise \\ref{foo} is important`);
         expect(await normalizeHtml(html)).toEqual(

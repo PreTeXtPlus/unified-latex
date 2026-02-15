@@ -174,14 +174,20 @@ export const environmentReplacements: Record<
     // TODO: add additional envs like theorem, etc.
     enumerate: enumerateFactory("ol"),
     itemize: enumerateFactory("ul"),
-    center: removeEnv,
     tabular: createTableFromTabular,
+    center: (env) => {
+        return htmlLike({
+            tag: "blockquote",
+            content: wrapPars(env.content),
+        });
+    },
     quote: (env) => {
         return htmlLike({
             tag: "blockquote",
-            content: env.content,
+            content: wrapPars(env.content),
         });
     },
+
     ...genEnvironmentReplacements(),
 };
 
