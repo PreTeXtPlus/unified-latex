@@ -136,7 +136,6 @@ export const macroReplacements: Record<
             tag: "xref",
             attributes: {
                 ref: ref || "",
-                text: "global",
             },
         });
     },
@@ -180,6 +179,19 @@ export const macroReplacements: Record<
             },
         });
     },
+    index: (node) => {
+        // Todo: we may want to add attributes for things like "see" and "seealso" that can be included in the index macro's arguments
+        const args = getArgsContent(node);
+        const term = args[0] || [];
+        return htmlLike({
+            tag: "idx",
+            content: htmlLike({
+                tag: "h",
+                content: term,
+            }),
+        });
+    },
+
     "\\": emptyStringWithWarningFactory(
         `Warning: There is no equivalent tag for \"\\\", an empty Ast.String was used as a replacement.`
     ),

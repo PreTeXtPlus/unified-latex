@@ -31,8 +31,13 @@ export function wrapPars(
             "medskip",
             "bigskip",
             "hfill",
+            "includegraphics",
+            "index",
         ],
-        environmentsThatDontBreakPars = [],
+        environmentsThatDontBreakPars = [
+            "itemize",
+            "enumerate",
+        ],
     } = options || {};
 
     const parSplits = splitForPars(nodes, {

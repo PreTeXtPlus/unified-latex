@@ -237,7 +237,7 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         // Custom labels are handled
         ast = process(`\\[a\\\\b\\]`);
         expect(await normalizeHtml(ast)).toEqual(
-            await normalizeHtml(`<me>a\\\\b</me>`)
+            await normalizeHtml(`<md>a\\\\b</md>`)
         );
     });
 
@@ -256,7 +256,7 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
 
         ast = process(`x\n\ny\\[a\\\\b\\]z`);
         expect(await normalizeHtml(ast)).toEqual(
-            await normalizeHtml(`<p>x</p><p>y<me>a\\\\b</me>z</p>`)
+            await normalizeHtml(`<p>x</p><p>y<md>a\\\\b</md>z</p>`)
         );
     });
     it("replaces command inside argument", async () => {
@@ -390,6 +390,14 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("converts solution", async () => {
+        html = process(`\\begin{solution}sol\n\\end{solution}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<solution><p>sol</p></solution>`
+            )
+        );
+    });
     it("Gives a theorem a title", async () => {
         html = process(`\\begin{theorem}[My Theorem]\na\n\nb\n\\end{theorem}`);
         expect(await normalizeHtml(html)).toEqual(
@@ -406,11 +414,19 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("makes centered text into blockquotes", async () => {
+        html = process(`\\begin{center}\na\n\nb\n\\end{center}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<blockquote><p>a</p><p>b</p></blockquote>`
+            )
+        );
+    });
     it("Replaces \\ref with a xref", async () => {
         html = process(`Exercise \\ref{foo} is important`);
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `Exercise <xref ref="foo" text="global"/> is important`
+                `Exercise <xref ref="foo"/> is important`
             )
         );
     });
@@ -456,6 +472,37 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
                 `We can write a <term>specific term</term> when defining something.`
+            )
+        );
+    });
+    it("Handles index macros", async () => {
+        html = process(`We can index a term with \\index{my term} or similar.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h></idx> or similar.`
+            )
+        );
+    });
+    it.skip("handles index macros with subheadings, see, and see also", async () => {
+
+        html = process(`We can index a term with \\index{my term!my subterm} for subheadings.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h><h>my subterm</h></idx> for subheadings.`
+            )
+        );
+
+        html = process(`We can index a term with \\index{my term|see {other term}}.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h><see>other term</see></idx> or similar.`
+            )
+        );
+
+        html = process(`We can index a term with \\index{my term|seealso {other term}}.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `We can index a term with <idx><h>my term</h><seealso>other term</seealso></idx> or similar.`
             )
         );
     });
