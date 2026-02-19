@@ -32,9 +32,9 @@ export function wrapPars(
             "bigskip",
             "hfill",
             "includegraphics",
-            "index",
         ],
         environmentsThatDontBreakPars = [
+            "index",
             "itemize",
             "enumerate",
         ],

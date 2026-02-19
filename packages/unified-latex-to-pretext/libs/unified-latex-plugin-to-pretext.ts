@@ -64,6 +64,7 @@ export const unifiedLatexToPretext: Plugin<
         tree.content = content;
 
         unified().use(unifiedLatexToPretextLike, options).run(tree, file);
+        console.log("After converting to pretext-like:", JSON.stringify(tree, null, 3));
 
         // This should happen right before converting to PreTeXt because macros like `\&` should
         // be expanded via html rules first (and not turned into their corresponding ligature directly)

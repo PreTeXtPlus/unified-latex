@@ -17,8 +17,8 @@ import { EXIT, SKIP, visit } from "@unified-latex/unified-latex-util-visit";
 import { environmentReplacements as _environmentReplacements } from "./pre-conversion-subs/environment-subs";
 import {
     attachNeededRenderInfo,
-    katexSpecificEnvironmentReplacements,
-    katexSpecificMacroReplacements,
+    mathjaxSpecificEnvironmentReplacements,
+    mathjaxSpecificMacroReplacements,
 } from "./pre-conversion-subs/katex-subs";
 import { macroReplacements as _macroReplacements } from "./pre-conversion-subs/macro-subs";
 import { streamingMacroReplacements } from "./pre-conversion-subs/streaming-command-subs";
@@ -27,7 +27,7 @@ import {
     breakOnBoundaries,
     isMappedEnviron,
 } from "./pre-conversion-subs/break-on-boundaries";
-import { reportMacrosUnsupportedByKatex } from "./pre-conversion-subs/report-unsupported-macro-katex";
+import { reportMacrosUnsupportedByMathjax } from "./pre-conversion-subs/report-unsupported-macro-mathjax";
 import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
 import { getArgsContent } from "@unified-latex/unified-latex-util-arguments";
 import { s } from "@unified-latex/unified-latex-builder";
@@ -84,11 +84,11 @@ export const unifiedLatexToPretextLike: Plugin<
     const isReplaceableEnvironment = match.createEnvironmentMatcher(
         environmentReplacements
     );
-    const isKatexMacro = match.createMacroMatcher(
-        katexSpecificMacroReplacements
+    const isMathjaxMacro = match.createMacroMatcher(
+        mathjaxSpecificMacroReplacements
     );
-    const isKatexEnvironment = match.createEnvironmentMatcher(
-        katexSpecificEnvironmentReplacements
+    const isMathjaxEnvironment = match.createEnvironmentMatcher(
+        mathjaxSpecificEnvironmentReplacements
     );
 
     return (tree, file) => {
@@ -157,25 +157,25 @@ export const unifiedLatexToPretextLike: Plugin<
         });
 
         // before replacing math-mode macros, report any macros that can't be replaced
-        const unsupportedByKatex = reportMacrosUnsupportedByKatex(tree);
+        const unsupportedByMathjax = reportMacrosUnsupportedByMathjax(tree);
 
         // add these warning messages into the file one at a time
-        for (const warningMessage of unsupportedByKatex.messages) {
+        for (const warningMessage of unsupportedByMathjax.messages) {
             file.message(
                 warningMessage,
                 warningMessage.place,
-                "unified-latex-to-pretext:report-unsupported-macro-katex"
+                "unified-latex-to-pretext:report-unsupported-macro-mathjax"
             );
         }
 
-        // Replace math-mode macros for appropriate KaTeX rendering
+        // Replace math-mode macros for appropriate MathJax rendering
         attachNeededRenderInfo(tree);
         replaceNode(tree, (node) => {
-            if (isKatexMacro(node)) {
-                return katexSpecificMacroReplacements[node.content](node);
+            if (isMathjaxMacro(node)) {
+                return mathjaxSpecificMacroReplacements[node.content](node);
             }
-            if (isKatexEnvironment(node)) {
-                return katexSpecificEnvironmentReplacements[printRaw(node.env)](
+            if (isMathjaxEnvironment(node)) {
+                return mathjaxSpecificEnvironmentReplacements[printRaw(node.env)](
                     node
                 );
             }

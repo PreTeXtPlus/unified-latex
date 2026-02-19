@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import util from "util";
 import { getParser } from "@unified-latex/unified-latex-util-parse";
-import { reportMacrosUnsupportedByKatex } from "@unified-latex/unified-latex-to-pretext/libs/pre-conversion-subs/report-unsupported-macro-katex";
+import { reportMacrosUnsupportedByMathjax } from "@unified-latex/unified-latex-to-pretext/libs/pre-conversion-subs/report-unsupported-macro-mathjax";
 
 // Make console.log pretty-print by default
 const origLog = console.log;
@@ -18,7 +18,7 @@ describe("unified-latex-to-pretext:report-unsupported-macro-katex", () => {
         const parser = getParser();
         const ast = parser.parse(value);
 
-        expect(reportMacrosUnsupportedByKatex(ast).messages.length).toEqual(1);
+        expect(reportMacrosUnsupportedByMathjax(ast).messages.length).toEqual(1);
     });
 
     it("can report no unsupported macros in mathmode", () => {
@@ -27,7 +27,7 @@ describe("unified-latex-to-pretext:report-unsupported-macro-katex", () => {
         const parser = getParser();
         const ast = parser.parse(value);
 
-        expect(reportMacrosUnsupportedByKatex(ast).messages.length).toEqual(0);
+        expect(reportMacrosUnsupportedByMathjax(ast).messages.length).toEqual(0);
     });
 
     it("doesn't report unsupported macros outside of math mode", () => {
@@ -36,7 +36,7 @@ describe("unified-latex-to-pretext:report-unsupported-macro-katex", () => {
         const parser = getParser();
         const ast = parser.parse(value);
 
-        expect(reportMacrosUnsupportedByKatex(ast).messages.length).toEqual(0);
+        expect(reportMacrosUnsupportedByMathjax(ast).messages.length).toEqual(0);
     });
 
     it("reports unsupported macros in text mode with a math anscestor", () => {
@@ -45,7 +45,7 @@ describe("unified-latex-to-pretext:report-unsupported-macro-katex", () => {
         const parser = getParser();
         const ast = parser.parse(value);
 
-        expect(reportMacrosUnsupportedByKatex(ast).messages.length).toEqual(1);
+        expect(reportMacrosUnsupportedByMathjax(ast).messages.length).toEqual(1);
     });
 
     it("can report unsupported macros in display mathmode", () => {
@@ -54,7 +54,7 @@ describe("unified-latex-to-pretext:report-unsupported-macro-katex", () => {
         const parser = getParser();
         const ast = parser.parse(value);
 
-        expect(reportMacrosUnsupportedByKatex(ast).messages.length).toEqual(2);
+        expect(reportMacrosUnsupportedByMathjax(ast).messages.length).toEqual(2);
     });
 
     it("can report unsupported macros in equation environment", () => {
@@ -63,6 +63,6 @@ describe("unified-latex-to-pretext:report-unsupported-macro-katex", () => {
         const parser = getParser();
         const ast = parser.parse(value);
 
-        expect(reportMacrosUnsupportedByKatex(ast).messages.length).toEqual(2);
+        expect(reportMacrosUnsupportedByMathjax(ast).messages.length).toEqual(2);
     });
 });
