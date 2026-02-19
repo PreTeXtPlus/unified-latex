@@ -506,4 +506,12 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("Can insert correct document title", async () => {
+        html = process(`\\title{My Title}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<title>My Title</title><p>Content</p>`
+            )
+        );
+    });
 });

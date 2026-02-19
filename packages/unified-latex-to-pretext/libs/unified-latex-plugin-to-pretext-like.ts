@@ -271,12 +271,17 @@ function createValidPretextDoc(tree: Ast.Root): void {
     if (title) {
         const titleArg = getArgsContent(title)[1];
 
-        // get the actual title
+        // get the actual title.
         if (titleArg) {
-            const titleString = titleArg[0] as Ast.String;
             tree.content.unshift(
-                htmlLike({ tag: "title", content: titleString })
+                htmlLike({ tag: "title", content: titleArg })
             );
+            //now remove the title macro since we don't want it in the content
+            replaceNode(tree, (node) => {
+                if (node === title) {
+                    return [];
+                }
+            });
         }
         // if no title name was given, make an empty tag
         else {
