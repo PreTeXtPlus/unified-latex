@@ -238,4 +238,18 @@ export const macroReplacements: Record<
             content: [],
         });
     },
+    caption: (node, parent) => {
+        const args = getArgsContent(node);
+        const captionText = args[args.length - 1] || [];
+        // Tables have titles instead of captions.
+        // Note we do this check after environment subs, so we already converted the table to an html-like tag with tagName "table"
+        const isInTable = parent?.parents?.some(
+            (ancestor) => ancestor.type === "macro" && ancestor.content === "html-tag:table"
+        ) ?? false;
+        let ret = htmlLike({
+            tag: isInTable ? "title" : "caption",
+            content: captionText,
+        });
+        return ret;
+    },
 };

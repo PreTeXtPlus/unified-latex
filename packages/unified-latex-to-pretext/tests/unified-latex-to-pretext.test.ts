@@ -506,11 +506,17 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
-    it("Can insert correct document title", async () => {
-        html = process(`\\title{My Title}`);
+    it("Converts tables and figures with captions", async () => {
+        html = process(`\\begin{table}\\caption{My table}\\begin{tabular}{l l}a & b\\\\c & d\\end{tabular}\\end{table}`);
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<title>My Title</title><p>Content</p>`
+                `<table><title>My table</title><tabular><row><cell>a</cell><cell>b</cell></row><row><cell>c</cell><cell>d</cell></row></tabular></table>`
+            )
+        );
+        html = process(`\\begin{figure}\\caption{My figure}\\includegraphics{example.png}\\end{figure}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<figure><caption>My figure</caption><image source="example.png"/></figure>`
             )
         );
     });

@@ -187,7 +187,18 @@ export const environmentReplacements: Record<
             content: wrapPars(env.content),
         });
     },
-
+    figure: (env) => {
+        return htmlLike({
+            tag: "figure",
+            content: env.content,
+        });
+    },
+    table: (env) => {
+        return htmlLike({
+            tag: "table",
+            content: env.content,
+        });
+    },
     ...genEnvironmentReplacements(),
 };
 
