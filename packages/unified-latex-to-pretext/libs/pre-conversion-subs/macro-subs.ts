@@ -1,6 +1,6 @@
 import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
 import * as Ast from "@unified-latex/unified-latex-types";
-import { getArgsContent } from "@unified-latex/unified-latex-util-arguments";
+import { getArgsContent, getNamedArgsContent } from "@unified-latex/unified-latex-util-arguments";
 import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
 import { VisitInfo } from "@unified-latex/unified-latex-util-visit";
 import { VFile } from "vfile";
@@ -240,9 +240,8 @@ export const macroReplacements: Record<
     },
     caption: (node, parent) => {
         const args = getArgsContent(node);
-        console.log(args);
-        console.log(node);
-        const captionText = args[args.length - 1] || [];
+        const namedArgs = getNamedArgsContent(node);
+        const captionText = namedArgs["captionText"] || args[args.length - 1] || [];
         // Tables have titles instead of captions.
         // Note we do this check after environment subs, so we already converted the table to an html-like tag with tagName "table"
         const isInTable = parent?.parents?.some(
