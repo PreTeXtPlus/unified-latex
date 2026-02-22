@@ -43,6 +43,14 @@ export type EnvInfo = {
          * @type {boolean}
          */
         tikzEnvironment?: boolean;
+        /**
+         * Object of additional attributes that will be added to the environment's node when processing.
+         * Used for things like migrating \lable to xml:id attributes, or any other situation where
+         * an attribute must be inferred from nearby macros/elements.
+         *
+         * @type {Record<string, string>}
+         */
+        additionalAttributes?: Record<string, string>;
     };
     /**
      * Function to process the body of an environment. The return value of `processContent`
@@ -127,6 +135,15 @@ export type MacroInfo = {
          * If `\sysdelims` is present, this contains the global information about the delimiters.
          */
         sysdelims?: (Ast.Node[] | null)[];
+        /**
+         * Object of additional attributes that will be added to the environment's node when processing.
+         * Used for things like migrating \lable to xml:id attributes,
+         * or any other situation where we need to parse nearby content to add to the attributes
+         * (instead of just the macro's given arguments)
+         *
+         * @type {Record<string, string>}
+         */
+        additionalAttributes?: Record<string, string>;
     };
     /**
      * The macro signature as an xparse argument specification string.

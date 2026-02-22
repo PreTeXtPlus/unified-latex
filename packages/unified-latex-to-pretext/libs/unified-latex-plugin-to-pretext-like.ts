@@ -31,6 +31,7 @@ import { reportMacrosUnsupportedByMathjax } from "./pre-conversion-subs/report-u
 import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
 import { getArgsContent } from "@unified-latex/unified-latex-util-arguments";
 import { s } from "@unified-latex/unified-latex-builder";
+import { sanitizeXmlId } from "./pre-conversion-subs/utils";
 
 type EnvironmentReplacements = typeof _environmentReplacements;
 type MacroReplacements = typeof _macroReplacements;
@@ -116,6 +117,9 @@ export const unifiedLatexToPretextLike: Plugin<
                 "unified-latex-to-pretext:break-on-boundaries"
             );
         }
+
+        // Look for label macros and attach their content as an argument to their parent environment.
+        attachAdditionalAttributes(tree);
 
         // Must be done *after* streaming commands are replaced.
         // We only wrap PARs if we *need* to. That is, if the content contains multiple paragraphs
@@ -299,6 +303,30 @@ function createValidPretextDoc(tree: Ast.Root): void {
     } else {
         tree.content = [htmlLike({ tag: "article", content: tree.content })];
     }
+}
+
+/**
+ * Look for nearby macros such as \label and attach their content as an additional attribute to the parent's renderInfo.
+ *
+ * @param tree
+ */
+function attachAdditionalAttributes(tree: Ast.Root): void {
+    replaceNode(tree, (node, info) => {
+        if (match.macro(node, "label")) {
+            const args = getArgsContent(node);
+            const labelContent = args[args.length - 1];
+            if (labelContent) {
+                // attach the label content as an argument to the parent environment
+                const renderInfo = info.parents[0]?._renderInfo ?? {};
+                renderInfo.additionalAttributes = renderInfo.additionalAttributes ?? {};
+                renderInfo.additionalAttributes["xml:id"] = sanitizeXmlId(printRaw(labelContent));
+                info.parents[0]._renderInfo = renderInfo;
+            }
+
+            // remove the label macro since we don't want it in the content anymore
+            return null;
+        }
+    });
 }
 
 // this will likely be removed
