@@ -17,8 +17,8 @@ import { EXIT, SKIP, visit } from "@unified-latex/unified-latex-util-visit";
 import { environmentReplacements as _environmentReplacements } from "./pre-conversion-subs/environment-subs";
 import {
     attachNeededRenderInfo,
-    katexSpecificEnvironmentReplacements,
-    katexSpecificMacroReplacements,
+    mathjaxSpecificEnvironmentReplacements,
+    mathjaxSpecificMacroReplacements,
 } from "./pre-conversion-subs/katex-subs";
 import { macroReplacements as _macroReplacements } from "./pre-conversion-subs/macro-subs";
 import { streamingMacroReplacements } from "./pre-conversion-subs/streaming-command-subs";
@@ -27,10 +27,11 @@ import {
     breakOnBoundaries,
     isMappedEnviron,
 } from "./pre-conversion-subs/break-on-boundaries";
-import { reportMacrosUnsupportedByKatex } from "./pre-conversion-subs/report-unsupported-macro-katex";
+import { reportMacrosUnsupportedByMathjax } from "./pre-conversion-subs/report-unsupported-macro-mathjax";
 import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
 import { getArgsContent } from "@unified-latex/unified-latex-util-arguments";
 import { s } from "@unified-latex/unified-latex-builder";
+import { sanitizeXmlId } from "./pre-conversion-subs/utils";
 
 type EnvironmentReplacements = typeof _environmentReplacements;
 type MacroReplacements = typeof _macroReplacements;
@@ -84,11 +85,11 @@ export const unifiedLatexToPretextLike: Plugin<
     const isReplaceableEnvironment = match.createEnvironmentMatcher(
         environmentReplacements
     );
-    const isKatexMacro = match.createMacroMatcher(
-        katexSpecificMacroReplacements
+    const isMathjaxMacro = match.createMacroMatcher(
+        mathjaxSpecificMacroReplacements
     );
-    const isKatexEnvironment = match.createEnvironmentMatcher(
-        katexSpecificEnvironmentReplacements
+    const isMathjaxEnvironment = match.createEnvironmentMatcher(
+        mathjaxSpecificEnvironmentReplacements
     );
 
     return (tree, file) => {
@@ -116,6 +117,9 @@ export const unifiedLatexToPretextLike: Plugin<
                 "unified-latex-to-pretext:break-on-boundaries"
             );
         }
+
+        // Look for label macros and attach their content as an argument to their parent environment.
+        attachAdditionalAttributes(tree);
 
         // Must be done *after* streaming commands are replaced.
         // We only wrap PARs if we *need* to. That is, if the content contains multiple paragraphs
@@ -157,27 +161,27 @@ export const unifiedLatexToPretextLike: Plugin<
         });
 
         // before replacing math-mode macros, report any macros that can't be replaced
-        const unsupportedByKatex = reportMacrosUnsupportedByKatex(tree);
+        const unsupportedByMathjax = reportMacrosUnsupportedByMathjax(tree);
 
         // add these warning messages into the file one at a time
-        for (const warningMessage of unsupportedByKatex.messages) {
+        for (const warningMessage of unsupportedByMathjax.messages) {
             file.message(
                 warningMessage,
                 warningMessage.place,
-                "unified-latex-to-pretext:report-unsupported-macro-katex"
+                "unified-latex-to-pretext:report-unsupported-macro-mathjax"
             );
         }
 
-        // Replace math-mode macros for appropriate KaTeX rendering
+        // Replace math-mode macros for appropriate MathJax rendering
         attachNeededRenderInfo(tree);
         replaceNode(tree, (node) => {
-            if (isKatexMacro(node)) {
-                return katexSpecificMacroReplacements[node.content](node);
+            if (isMathjaxMacro(node)) {
+                return mathjaxSpecificMacroReplacements[node.content](node);
             }
-            if (isKatexEnvironment(node)) {
-                return katexSpecificEnvironmentReplacements[printRaw(node.env)](
-                    node
-                );
+            if (isMathjaxEnvironment(node)) {
+                return mathjaxSpecificEnvironmentReplacements[
+                    printRaw(node.env)
+                ](node);
             }
         });
 
@@ -271,12 +275,15 @@ function createValidPretextDoc(tree: Ast.Root): void {
     if (title) {
         const titleArg = getArgsContent(title)[1];
 
-        // get the actual title
+        // get the actual title.
         if (titleArg) {
-            const titleString = titleArg[0] as Ast.String;
-            tree.content.unshift(
-                htmlLike({ tag: "title", content: titleString })
-            );
+            tree.content.unshift(htmlLike({ tag: "title", content: titleArg }));
+            //now remove the title macro since we don't want it in the content
+            replaceNode(tree, (node) => {
+                if (node === title) {
+                    return [];
+                }
+            });
         }
         // if no title name was given, make an empty tag
         else {
@@ -294,6 +301,35 @@ function createValidPretextDoc(tree: Ast.Root): void {
     } else {
         tree.content = [htmlLike({ tag: "article", content: tree.content })];
     }
+}
+
+/**
+ * Look for nearby macros such as \label and attach their content as an additional attribute to the parent's renderInfo.
+ *
+ * @param tree
+ */
+function attachAdditionalAttributes(tree: Ast.Root): void {
+    replaceNode(tree, (node, info) => {
+        if (match.macro(node, "label")) {
+            const args = getArgsContent(node);
+            const labelContent = args[args.length - 1];
+            if (labelContent) {
+                // attach the label content as an argument to the parent environment
+                const renderInfo = info.parents[0]?._renderInfo ?? {};
+                if (renderInfo) {
+                    renderInfo.additionalAttributes =
+                        renderInfo.additionalAttributes ?? {};
+                    renderInfo.additionalAttributes["xml:id"] = sanitizeXmlId(
+                        printRaw(labelContent)
+                    );
+                    info.parents[0]._renderInfo = renderInfo;
+                }
+            }
+
+            // remove the label macro since we don't want it in the content anymore
+            return null;
+        }
+    });
 }
 
 // this will likely be removed

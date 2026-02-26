@@ -11,7 +11,7 @@ const RIGHT: Ast.Macro = { type: "macro", content: "right" };
 const DEFAULT_LEFT_DELIM: Ast.Macro = { type: "macro", content: "{" };
 const DEFAULT_RIGHT_DELIM: Ast.String = { type: "string", content: "." };
 
-export const katexSpecificMacroReplacements: Record<
+export const mathjaxSpecificMacroReplacements: Record<
     string,
     (node: Ast.Macro) => Ast.Node | Ast.Node[]
 > = {
@@ -49,29 +49,17 @@ export const katexSpecificMacroReplacements: Record<
     sysdelim: () => [],
 };
 
-function wrapInDisplayMath(ast: Ast.Node | Ast.Node[]): Ast.Node {
-    const content = Array.isArray(ast) ? ast : [ast];
 
-    return { type: "displaymath", content };
-}
-
-export const katexSpecificEnvironmentReplacements: Record<
+export const mathjaxSpecificEnvironmentReplacements: Record<
     string,
     (node: Ast.Environment) => Ast.Node | Ast.Node[]
 > = {
-    // katex supports the align environments, but it will only render them
-    // if you are already in math mode. Warning: these will produce invalid latex!
-    align: wrapInDisplayMath,
-    "align*": wrapInDisplayMath,
-    alignat: wrapInDisplayMath,
-    "alignat*": wrapInDisplayMath,
-    equation: wrapInDisplayMath,
-    "equation*": wrapInDisplayMath,
+    // Currently nothing here; but keeping this function in case there are specific environments for latex we want to handle differently in pretext.
 };
 
 /**
  * Attach `renderInfo` needed for converting some macros into their
- * katex equivalents.
+ * mathjax equivalents.
  */
 export function attachNeededRenderInfo(ast: Ast.Ast) {
     attachSystemeSettingsAsRenderInfo(ast);

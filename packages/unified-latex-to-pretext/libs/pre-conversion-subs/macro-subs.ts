@@ -1,10 +1,17 @@
 import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
 import * as Ast from "@unified-latex/unified-latex-types";
-import { getArgsContent } from "@unified-latex/unified-latex-util-arguments";
+import {
+    getArgsContent,
+    getNamedArgsContent,
+} from "@unified-latex/unified-latex-util-arguments";
 import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
 import { VisitInfo } from "@unified-latex/unified-latex-util-visit";
 import { VFile } from "vfile";
-import { makeWarningMessage, emptyStringWithWarningFactory } from "./utils";
+import {
+    makeWarningMessage,
+    emptyStringWithWarningFactory,
+    sanitizeXmlId,
+} from "./utils";
 
 /**
  * Factory function that generates html-like macros that wrap their contents.
@@ -131,7 +138,7 @@ export const macroReplacements: Record<
     },
     ref: (node) => {
         const args = getArgsContent(node);
-        const ref = printRaw(args[1] || "");
+        const ref = sanitizeXmlId(printRaw(args[1] || ""));
         return htmlLike({
             tag: "xref",
             attributes: {
@@ -141,7 +148,7 @@ export const macroReplacements: Record<
     },
     eqref: (node) => {
         const args = getArgsContent(node);
-        const ref = printRaw(args[0] || "");
+        const ref = sanitizeXmlId(printRaw(args[0] || ""));
         return htmlLike({
             tag: "xref",
             attributes: {
@@ -151,7 +158,7 @@ export const macroReplacements: Record<
     },
     cref: (node) => {
         const args = getArgsContent(node);
-        const ref = printRaw(args[1] || "");
+        const ref = sanitizeXmlId(printRaw(args[1] || ""));
         return htmlLike({
             tag: "xref",
             attributes: {
@@ -161,7 +168,7 @@ export const macroReplacements: Record<
     },
     Cref: (node) => {
         const args = getArgsContent(node);
-        const ref = printRaw(args[1] || "");
+        const ref = sanitizeXmlId(printRaw(args[1] || ""));
         return htmlLike({
             tag: "xref",
             attributes: {
@@ -171,7 +178,7 @@ export const macroReplacements: Record<
     },
     cite: (node) => {
         const args = getArgsContent(node);
-        const ref = printRaw(args[1] || "");
+        const ref = sanitizeXmlId(printRaw(args[1] || ""));
         return htmlLike({
             tag: "xref",
             attributes: {
@@ -237,5 +244,24 @@ export const macroReplacements: Record<
             },
             content: [],
         });
+    },
+    caption: (node, parent) => {
+        const args = getArgsContent(node);
+        const namedArgs = getNamedArgsContent(node);
+        const captionText =
+            namedArgs["captionText"] || args[args.length - 1] || [];
+        // Tables have titles instead of captions.
+        // Note we do this check after environment subs, so we already converted the table to an html-like tag with tagName "table"
+        const isInTable =
+            parent?.parents?.some(
+                (ancestor) =>
+                    ancestor.type === "macro" &&
+                    ancestor.content === "html-tag:table"
+            ) ?? false;
+        let ret = htmlLike({
+            tag: isInTable ? "title" : "caption",
+            content: captionText,
+        });
+        return ret;
     },
 };

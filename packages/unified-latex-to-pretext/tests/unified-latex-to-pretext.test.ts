@@ -506,4 +506,34 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("Converts tables and figures with captions", async () => {
+        html = process(`\\begin{table}\\caption{My table}\\begin{tabular}{l l}a & b\\\\c & d\\end{tabular}\\end{table}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<table><title>My table</title><tabular><row><cell>a</cell><cell>b</cell></row><row><cell>c</cell><cell>d</cell></row></tabular></table>`
+            )
+        );
+        html = process(`\\begin{figure}\\caption{My figure}\\includegraphics{example.png}\\end{figure}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<figure><caption>My figure</caption><image source="example.png"/></figure>`
+            )
+        );
+    });
+
+    it("Turns labels into xml:id attributes and refs into xrefs", async () => {
+        html = process(`\\section{My section}\\label{sec:my section}\n\nSee section \\ref{sec:my section}.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<section xml:id="sec-my_section"><title>My section</title><p>See section <xref ref="sec-my_section"/>.</p></section>`
+            )
+        );
+
+        html = process(`\\begin{theorem}\\label{thm:important}Important stuff.\\end{theorem}\n\nAs we saw in \\ref{thm:important}, this is important.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<theorem xml:id="thm-important"><statement><p>Important stuff.</p></statement></theorem><p>As we saw in <xref ref="thm-important"/>, this is important.</p>`
+            )
+        );
+    });
 });

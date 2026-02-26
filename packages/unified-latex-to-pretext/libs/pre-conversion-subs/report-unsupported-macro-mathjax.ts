@@ -8,7 +8,7 @@ import { makeWarningMessage } from "./utils";
 /**
  * Return a list of macros used in ast that are unsupported by KaTeX
  */
-export function reportMacrosUnsupportedByKatex(ast: Ast.Ast): {
+export function reportMacrosUnsupportedByMathjax(ast: Ast.Ast): {
     messages: VFileMessage[];
 } {
     const unsupported: { messages: VFileMessage[] } = { messages: [] };
