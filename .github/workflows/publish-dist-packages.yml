@@ -1,0 +1,73 @@
+name: Publish Dist Packages
+
+on:
+    workflow_dispatch:
+        inputs:
+            update_dist_branch:
+                description: "Also force-update dist branch with fresh build artifacts"
+                required: true
+                default: true
+                type: boolean
+            branch_prefix:
+                description: "Prefix for per-package branches"
+                required: true
+                default: "release"
+                type: string
+    push:
+        branches: ["main", "pretext"]
+
+permissions:
+    contents: write
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build all packages
+              run: npm run build
+
+            - name: Generate distributable package.json files
+              run: npm run package -ws
+
+            - name: Configure git identity
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            - name: Resolve branch prefix
+              run: |
+                  PREFIX="${{ inputs.branch_prefix }}"
+                  if [ -z "$PREFIX" ]; then
+                      PREFIX="release"
+                  fi
+                  echo "BRANCH_PREFIX=$PREFIX" >> "$GITHUB_ENV"
+
+            - name: Update dist branch
+              if: ${{ github.event_name == 'push' || inputs.update_dist_branch }}
+              run: |
+                  git switch -C dist
+                  git add -f packages/*/dist
+                  if git diff --cached --quiet; then
+                      echo "No dist changes to commit."
+                  else
+                      git commit -m "build artifacts from ${{ github.ref_name }} @ ${{ github.sha }}"
+                      git push --force origin dist
+                  fi
+
+            - name: Push per-package branches
+              run: node scripts/publish-dist-branches.mjs --push --prefix "$BRANCH_PREFIX"
