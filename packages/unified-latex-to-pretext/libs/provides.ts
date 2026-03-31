@@ -11,6 +11,8 @@ import {
 export const macros: MacroInfoRecord = {
     // PreTeXt-specific macro
     term: { signature: "m" },
+    // Verbatim/code inline macro (Group H)
+    code: { signature: "m" },
 };
 
 /**
@@ -29,6 +31,9 @@ export const environments: EnvInfoRecord = {
     assemblage: { signature: "o" },
     // ProjectLike
     activity: { signature: "o" },
+    exploration: { signature: "o" },
+    investigation: { signature: "o" },
+    project: { signature: "o" },
     // ComputationLike
     computation: { signature: "o" },
     technology: { signature: "o" },

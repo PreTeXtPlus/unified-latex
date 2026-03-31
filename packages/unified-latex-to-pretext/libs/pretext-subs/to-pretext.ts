@@ -66,6 +66,7 @@ export function toPretextWithLoggerFactory(
             case "displaymath":
                 return x("md", printRaw(node.content));
             case "verb":
+                return x("c", node.content);
             case "verbatim":
                 return x("pre", node.content);
             case "whitespace":

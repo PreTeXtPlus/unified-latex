@@ -9,6 +9,7 @@ import {
 } from "@unified-latex/unified-latex-util-arguments";
 import { match } from "@unified-latex/unified-latex-util-match";
 import { wrapPars } from "../wrap-pars";
+import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
 import { VisitInfo } from "@unified-latex/unified-latex-util-visit";
 import { VFile } from "vfile";
 import { makeWarningMessage } from "./utils";
@@ -244,6 +245,12 @@ export const environmentReplacements: Record<
         wrapContentInPars: false,
         extractTitleFromArgs: false,
     }),
+    // Verbatim/code block (Group H): emit raw content inside <pre>
+    code: (env) =>
+        htmlLike({
+            tag: "pre",
+            content: [{ type: "string", content: printRaw(env.content) }],
+        }),
     ...genEnvironmentReplacements(),
 };
 

@@ -643,4 +643,28 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         expect(await normalizeHtml(process(`\\ldots`))).toEqual(await n(`<ellipsis/>`));
         expect(await normalizeHtml(process(`\\dots`))).toEqual(await n(`<ellipsis/>`));
     });
+    it("converts \\verb to inline <c>", async () => {
+        html = process(`inline \\verb|x^2| code`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`inline <c>x^2</c> code`)
+        );
+    });
+    it("converts verbatim environment to <pre>", async () => {
+        html = process(`\\begin{verbatim}\nx = 1 + 2\n\\end{verbatim}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<pre>\nx = 1 + 2\n</pre>`)
+        );
+    });
+    it("converts \\code{} macro to inline <c>", async () => {
+        html = process(`inline \\code{x^2} code`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`inline <c>x^2</c> code`)
+        );
+    });
+    it("converts \\begin{code} environment to <pre>", async () => {
+        html = process(`\\begin{code}\nx = 1 + 2\n\\end{code}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<pre>x = 1 + 2</pre>`)
+        );
+    });
 });

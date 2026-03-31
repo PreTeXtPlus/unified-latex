@@ -244,6 +244,8 @@ export const macroReplacements: Record<
     BC: () => htmlLike({ tag: "bc" }),
     AM: () => htmlLike({ tag: "am" }),
     PM: () => htmlLike({ tag: "pm" }),
+    // Verbatim/code macros (Group H)
+    code: factory("c"),
     // Character/symbol macros (Group G)
     copyright: () => htmlLike({ tag: "copyright" }),
     registered: () => htmlLike({ tag: "registered" }),
