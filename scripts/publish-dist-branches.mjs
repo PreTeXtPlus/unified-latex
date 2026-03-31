@@ -84,14 +84,15 @@ try {
 } catch {}
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ul-publish-"));
-const rootUrl =
-    "file://" + ROOT.replace(/\\/g, "/").replace(/^([A-Za-z]):/, "/$1:");
 
 console.log(`Publishing ${packages.length} package branch(es) with prefix '${branchPrefix}/'...`);
 
 try {
     exec("git init", tmpDir);
-    exec(`git remote add origin \"${rootUrl}\"`, tmpDir);
+    if (doPush) {
+        const remoteUrl = exec("git remote get-url origin", ROOT);
+        exec(`git remote add origin \"${remoteUrl}\"`, tmpDir);
+    }
 
     for (const pkg of packages) {
         const branch = `${branchPrefix}/${pkg}`;
@@ -115,19 +116,21 @@ try {
             `git -c user.name=\"${gitUser}\" -c user.email=\"${gitEmail}\" commit -m \"dist: ${pkg} v${pkgJson.version}\"`,
             tmpDir
         );
-        exec(`git push --force origin \"${branch}:refs/heads/${branch}\"`, tmpDir);
 
         process.stdout.write("done\n");
     }
+
+    if (doPush) {
+        const refspecs = packages
+            .map((pkg) => {
+                const branch = `${branchPrefix}/${pkg}`;
+                return `\"${branch}:refs/heads/${branch}\"`;
+            })
+            .join(" ");
+        exec(`git push --force origin ${refspecs}`, tmpDir);
+    }
 } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
-}
-
-if (doPush) {
-    for (const pkg of packages) {
-        const branch = `${branchPrefix}/${pkg}`;
-        exec(`git push --force origin \"${branch}\"`, ROOT);
-    }
 }
 
 console.log("Done.");
