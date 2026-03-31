@@ -6,14 +6,18 @@ import { TypeGuard } from "@unified-latex/unified-latex-types";
 import { expandUnicodeLigatures } from "@unified-latex/unified-latex-util-ligatures";
 import { match } from "@unified-latex/unified-latex-util-match";
 import { EXIT, visit } from "@unified-latex/unified-latex-util-visit";
-import { attachMacroArgs } from "@unified-latex/unified-latex-util-arguments";
+import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
+import { attachMacroArgs, gobbleArguments } from "@unified-latex/unified-latex-util-arguments";
 import { toPretextWithLoggerFactory } from "./pretext-subs/to-pretext";
 import {
     unifiedLatexToPretextLike,
     PluginOptions as HtmlLikePluginOptions,
 } from "./unified-latex-plugin-to-pretext-like";
 import { expandUserDefinedMacros } from "./pre-conversion-subs/expand-user-defined-macros";
-import { macros as pretextMacros } from "./provides";
+import {
+    macros as pretextMacros,
+    environments as pretextEnvironments,
+} from "./provides";
 
 export type PluginOptions = HtmlLikePluginOptions & {
     /**
@@ -41,6 +45,18 @@ export const unifiedLatexToPretext: Plugin<
 
         // Attach PreTeXt-specific macro arguments
         attachMacroArgs(tree, pretextMacros);
+
+        // Attach arguments for PreTeXt-specific environments (e.g. optional title)
+        // that are not defined in any CTAN package and thus not processed by the parser.
+        visit(tree, (node) => {
+            if (!match.environment(node)) return;
+            const envName = printRaw(node.env);
+            const envInfo = pretextEnvironments[envName];
+            if (envInfo?.signature && node.args == null) {
+                const { args } = gobbleArguments(node.content, envInfo.signature);
+                node.args = args;
+            }
+        });
 
         // If there is a \begin{document}...\end{document}, that's the only
         // content we want to convert.

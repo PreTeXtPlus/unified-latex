@@ -444,6 +444,60 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("converts aside environment", async () => {
+        html = process(`\\begin{aside}[My aside]Some content.\\end{aside}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<aside><title>My aside</title><p>Some content.</p></aside>`)
+        );
+    });
+    it("converts aside environment without title", async () => {
+        html = process(`\\begin{aside}Some content.\\end{aside}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<aside><p>Some content.</p></aside>`)
+        );
+    });
+    it("converts assemblage environment", async () => {
+        html = process(`\\begin{assemblage}[Key Facts]Item one.\\end{assemblage}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<assemblage><title>Key Facts</title><p>Item one.</p></assemblage>`)
+        );
+    });
+    it("converts activity environment", async () => {
+        html = process(`\\begin{activity}[My Activity]Do this.\\end{activity}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<activity><title>My Activity</title><p>Do this.</p></activity>`)
+        );
+    });
+    it("converts biographical environment", async () => {
+        html = process(`\\begin{biographical}[Ada Lovelace]She was a mathematician.\\end{biographical}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<biographical><title>Ada Lovelace</title><p>She was a mathematician.</p></biographical>`)
+        );
+    });
+    it("converts historical environment", async () => {
+        html = process(`\\begin{historical}[History]Long ago.\\end{historical}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<historical><title>History</title><p>Long ago.</p></historical>`)
+        );
+    });
+    it("converts computation environment", async () => {
+        html = process(`\\begin{computation}Some computation.\\end{computation}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<computation><p>Some computation.</p></computation>`)
+        );
+    });
+    it("converts technology environment", async () => {
+        html = process(`\\begin{technology}[Tech note]Use this tool.\\end{technology}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<technology><title>Tech note</title><p>Use this tool.</p></technology>`)
+        );
+    });
+    it("converts data environment", async () => {
+        html = process(`\\begin{data}[Dataset]The values are.\\end{data}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<data><title>Dataset</title><p>The values are.</p></data>`)
+        );
+    });
     it("makes centered text into blockquotes", async () => {
         html = process(`\\begin{center}\na\n\nb\n\\end{center}`);
         expect(await normalizeHtml(html)).toEqual(
