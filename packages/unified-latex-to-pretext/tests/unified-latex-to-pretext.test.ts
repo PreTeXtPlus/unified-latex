@@ -620,4 +620,27 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("converts generator macros", async () => {
+        const n = (s: string) => normalizeHtml(s);
+        expect(await normalizeHtml(process(`\\eg`))).toEqual(await n(`<eg/>`));
+        expect(await normalizeHtml(process(`\\ie`))).toEqual(await n(`<ie/>`));
+        expect(await normalizeHtml(process(`\\etc`))).toEqual(await n(`<etc/>`));
+        expect(await normalizeHtml(process(`\\XeTeX`))).toEqual(await n(`<xetex/>`));
+        expect(await normalizeHtml(process(`\\LuaTeX`))).toEqual(await n(`<luatex/>`));
+        expect(await normalizeHtml(process(`\\PreTeXt`))).toEqual(await n(`<pretext/>`));
+        expect(await normalizeHtml(process(`\\AD`))).toEqual(await n(`<ad/>`));
+        expect(await normalizeHtml(process(`\\BC`))).toEqual(await n(`<bc/>`));
+        expect(await normalizeHtml(process(`\\AM`))).toEqual(await n(`<am/>`));
+        expect(await normalizeHtml(process(`\\PM`))).toEqual(await n(`<pm/>`));
+    });
+    it("converts character/symbol macros", async () => {
+        const n = (s: string) => normalizeHtml(s);
+        expect(await normalizeHtml(process(`\\copyright`))).toEqual(await n(`<copyright/>`));
+        expect(await normalizeHtml(process(`\\registered`))).toEqual(await n(`<registered/>`));
+        expect(await normalizeHtml(process(`\\trademark`))).toEqual(await n(`<trademark/>`));
+        expect(await normalizeHtml(process(`\\degree`))).toEqual(await n(`<degree/>`));
+        expect(await normalizeHtml(process(`\\dagger`))).toEqual(await n(`<dagger/>`));
+        expect(await normalizeHtml(process(`\\ldots`))).toEqual(await n(`<ellipsis/>`));
+        expect(await normalizeHtml(process(`\\dots`))).toEqual(await n(`<ellipsis/>`));
+    });
 });

@@ -233,7 +233,25 @@ export const macroReplacements: Record<
     tex: (node) => {
         return htmlLike({ tag: "tex" });
     },
-    //tex: factory("tex"),
+    // Generator macros (Group F)
+    eg: () => htmlLike({ tag: "eg" }),
+    ie: () => htmlLike({ tag: "ie" }),
+    etc: () => htmlLike({ tag: "etc" }),
+    XeTeX: () => htmlLike({ tag: "xetex" }),
+    LuaTeX: () => htmlLike({ tag: "luatex" }),
+    PreTeXt: () => htmlLike({ tag: "pretext" }),
+    AD: () => htmlLike({ tag: "ad" }),
+    BC: () => htmlLike({ tag: "bc" }),
+    AM: () => htmlLike({ tag: "am" }),
+    PM: () => htmlLike({ tag: "pm" }),
+    // Character/symbol macros (Group G)
+    copyright: () => htmlLike({ tag: "copyright" }),
+    registered: () => htmlLike({ tag: "registered" }),
+    trademark: () => htmlLike({ tag: "trademark" }),
+    degree: () => htmlLike({ tag: "degree" }),
+    dagger: () => htmlLike({ tag: "dagger" }),
+    ldots: () => htmlLike({ tag: "ellipsis" }),
+    dots: () => htmlLike({ tag: "ellipsis" }),
     includegraphics: (node) => {
         const args = getArgsContent(node);
         const source = printRaw(args[args.length - 1] || []);
