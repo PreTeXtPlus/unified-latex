@@ -971,4 +971,28 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             await normalizeHtml(`<pre>x = 1 + 2</pre>`)
         );
     });
+    it("converts inline text macros", async () => {
+        expect(await normalizeHtml(process(`\\footnote{a note}`))).toEqual(await normalizeHtml(`<fn>a note</fn>`));
+        expect(await normalizeHtml(process(`\\fn{a note}`))).toEqual(await normalizeHtml(`<fn>a note</fn>`));
+        expect(await normalizeHtml(process(`\\q{quoted}`))).toEqual(await normalizeHtml(`<q>quoted</q>`));
+        expect(await normalizeHtml(process(`\\enquote{quoted}`))).toEqual(await normalizeHtml(`<q>quoted</q>`));
+        expect(await normalizeHtml(process(`\\abbr{DNA}`))).toEqual(await normalizeHtml(`<abbr>DNA</abbr>`));
+        expect(await normalizeHtml(process(`\\acro{NATO}`))).toEqual(await normalizeHtml(`<acro>NATO</acro>`));
+        expect(await normalizeHtml(process(`\\foreign{sine qua non}`))).toEqual(await normalizeHtml(`<foreign>sine qua non</foreign>`));
+        expect(await normalizeHtml(process(`\\foreignlanguage{latin}{sine qua non}`))).toEqual(await normalizeHtml(`<foreign>sine qua non</foreign>`));
+        expect(await normalizeHtml(process(`\\pubtitle{Calculus}`))).toEqual(await normalizeHtml(`<pubtitle>Calculus</pubtitle>`));
+        expect(await normalizeHtml(process(`\\booktitle{Calculus}`))).toEqual(await normalizeHtml(`<pubtitle>Calculus</pubtitle>`));
+        expect(await normalizeHtml(process(`\\articletitle{My Paper}`))).toEqual(await normalizeHtml(`<articletitle>My Paper</articletitle>`));
+    });
+    it("converts misc inline macros", async () => {
+        expect(await normalizeHtml(process(`\\taxon{Homo sapiens}`))).toEqual(await normalizeHtml(`<taxon>Homo sapiens</taxon>`));
+        expect(await normalizeHtml(process(`\\kbd{Ctrl+C}`))).toEqual(await normalizeHtml(`<kbd>Ctrl+C</kbd>`));
+        const n = (s: string) => normalizeHtml(s);
+        expect(await normalizeHtml(process(`\\fillin`))).toEqual(await n(`<fillin/>`));
+    });
+    it("converts tracked-change macros", async () => {
+        expect(await normalizeHtml(process(`\\sout{old text}`))).toEqual(await normalizeHtml(`<delete>old text</delete>`));
+        expect(await normalizeHtml(process(`\\insert{new text}`))).toEqual(await normalizeHtml(`<insert>new text</insert>`));
+        expect(await normalizeHtml(process(`\\stale{stale text}`))).toEqual(await normalizeHtml(`<stale>stale text</stale>`));
+    });
 });
