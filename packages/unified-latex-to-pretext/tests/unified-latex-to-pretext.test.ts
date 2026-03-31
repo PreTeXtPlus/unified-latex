@@ -976,6 +976,8 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         expect(await normalizeHtml(process(`\\fn{a note}`))).toEqual(await normalizeHtml(`<fn>a note</fn>`));
         expect(await normalizeHtml(process(`\\q{quoted}`))).toEqual(await normalizeHtml(`<q>quoted</q>`));
         expect(await normalizeHtml(process(`\\enquote{quoted}`))).toEqual(await normalizeHtml(`<q>quoted</q>`));
+        expect(await normalizeHtml(process(`\\sq{quoted}`))).toEqual(await normalizeHtml(`<sq>quoted</sq>`));
+        expect(await normalizeHtml(process(`\\enquotestar{quoted}`))).toEqual(await normalizeHtml(`<sq>quoted</sq>`));
         expect(await normalizeHtml(process(`\\abbr{DNA}`))).toEqual(await normalizeHtml(`<abbr>DNA</abbr>`));
         expect(await normalizeHtml(process(`\\acro{NATO}`))).toEqual(await normalizeHtml(`<acro>NATO</acro>`));
         expect(await normalizeHtml(process(`\\foreign{sine qua non}`))).toEqual(await normalizeHtml(`<foreign>sine qua non</foreign>`));
@@ -983,12 +985,16 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         expect(await normalizeHtml(process(`\\pubtitle{Calculus}`))).toEqual(await normalizeHtml(`<pubtitle>Calculus</pubtitle>`));
         expect(await normalizeHtml(process(`\\booktitle{Calculus}`))).toEqual(await normalizeHtml(`<pubtitle>Calculus</pubtitle>`));
         expect(await normalizeHtml(process(`\\articletitle{My Paper}`))).toEqual(await normalizeHtml(`<articletitle>My Paper</articletitle>`));
+        expect(await normalizeHtml(process(`\\xmltag{section}`))).toEqual(await normalizeHtml(`<tag>section</tag>`));
+        expect(await normalizeHtml(process(`\\xmlattr{xml:id}`))).toEqual(await normalizeHtml(`<attr>xml:id</attr>`));
     });
     it("converts misc inline macros", async () => {
         expect(await normalizeHtml(process(`\\taxon{Homo sapiens}`))).toEqual(await normalizeHtml(`<taxon>Homo sapiens</taxon>`));
         expect(await normalizeHtml(process(`\\kbd{Ctrl+C}`))).toEqual(await normalizeHtml(`<kbd>Ctrl+C</kbd>`));
         const n = (s: string) => normalizeHtml(s);
         expect(await normalizeHtml(process(`\\fillin`))).toEqual(await n(`<fillin/>`));
+        // lstinline → <c>
+        expect(await normalizeHtml(process(`use \\lstinline{x = 1} here`))).toEqual(await normalizeHtml(`use <c>x = 1</c> here`));
     });
     it("converts tracked-change macros", async () => {
         expect(await normalizeHtml(process(`\\sout{old text}`))).toEqual(await normalizeHtml(`<delete>old text</delete>`));
@@ -1137,6 +1143,38 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         html = process(`\\begin{task}\n\nContent.\n\n\\begin{hint}A hint.\\end{hint}\n\\end{task}`);
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(`<task><statement><p>Content.</p></statement><hint><p>A hint.</p></hint></task>`)
+        );
+    });
+    it("converts \\begin{solutions} environment and \\solutions{title} macro", async () => {
+        html = process(`\\begin{solutions}[Solutions to Section 1]\n\nSome solutions.\n\\end{solutions}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<solutions><title>Solutions to Section 1</title><p>Some solutions.</p></solutions>`)
+        );
+        html = process(`\\solutions{Chapter Solutions}\n\nSolution content.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<solutions><title>Chapter Solutions</title><p>Solution content.</p></solutions>`)
+        );
+    });
+    it("converts \\begin{gi} glossary item", async () => {
+        html = process(`\\begin{gi}\n\nA glossary term and definition.\n\\end{gi}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<gi><p>A glossary term and definition.</p></gi>`)
+        );
+    });
+    it("converts \\begin{sbsgroup} and \\begin{stack}", async () => {
+        html = process(`\\begin{sbsgroup}\n\nSide by side content.\n\\end{sbsgroup}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<sbsgroup><p>Side by side content.</p></sbsgroup>`)
+        );
+        html = process(`\\begin{stack}\n\nStacked content.\n\\end{stack}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<stack><p>Stacked content.</p></stack>`)
+        );
+    });
+    it("converts \\begin{listing} named code container", async () => {
+        html = process(`\\begin{listing}\\caption{My Code}\\begin{verbatim}\nx = 1\n\\end{verbatim}\\end{listing}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<listing><caption>My Code</caption><pre>\nx = 1\n</pre></listing>`)
         );
     });
 });
