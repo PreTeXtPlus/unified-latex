@@ -1,4 +1,7 @@
-import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
+import {
+    htmlLike,
+    isHtmlLikeTag,
+} from "@unified-latex/unified-latex-util-html-like";
 import * as Ast from "@unified-latex/unified-latex-types";
 import {
     getArgsContent,
@@ -105,6 +108,18 @@ interface EnvFactoryOptions {
     warningMessage?: string;
 }
 
+/**
+ * Tags that should be siblings of `<statement>` rather than children of it,
+ * when nested inside a theorem-like or exercise-like environment.
+ * For example, `<proof>` must follow `<statement>` inside `<theorem>`.
+ */
+const STATEMENT_SIBLING_TAGS = new Set([
+    "proof",
+    "hint",
+    "answer",
+    "solution",
+]);
+
 function envFactory(
     tag: string,
     options: EnvFactoryOptions = {}
@@ -124,16 +139,39 @@ function envFactory(
         }
 
         // Wrap content of the environment in paragraph tags
-        let content = wrapContentInPars ? wrapPars(env.content) : env.content;
+        let content: Ast.Node[];
 
         // Add a statement around the contents of the environment if requested.
+        // Any nested environments that must be siblings of <statement> (e.g. <proof>)
+        // are extracted before calling wrapPars so they don't end up buried inside a
+        // paragraph tag, then placed after the <statement> tag.
         if (requiresStatementTag) {
+            const statementEnvContent: Ast.Node[] = [];
+            const statementSiblings: Ast.Node[] = [];
+            for (const node of env.content) {
+                if (
+                    isHtmlLikeTag(node) &&
+                    STATEMENT_SIBLING_TAGS.has(
+                        (node as Ast.Macro).content.slice("html-tag:".length)
+                    )
+                ) {
+                    statementSiblings.push(node);
+                } else {
+                    statementEnvContent.push(node);
+                }
+            }
+            const statementContent = wrapContentInPars
+                ? wrapPars(statementEnvContent)
+                : statementEnvContent;
             content = [
                 htmlLike({
                     tag: "statement",
-                    content: content,
+                    content: statementContent,
                 }),
+                ...statementSiblings,
             ];
+        } else {
+            content = wrapContentInPars ? wrapPars(env.content) : env.content;
         }
 
         // Add a title tag if the environment has a title

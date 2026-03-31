@@ -406,6 +406,36 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             )
         );
     });
+    it("places proof as sibling of statement inside theorem", async () => {
+        html = process(
+            `\\begin{theorem}Some statement.\\begin{proof}Proof text.\\end{proof}\\end{theorem}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<theorem><statement><p>Some statement.</p></statement><proof><p>Proof text.</p></proof></theorem>`
+            )
+        );
+    });
+    it("places proof as sibling of statement inside theorem with title", async () => {
+        html = process(
+            `\\begin{theorem}[My Theorem]Some statement.\\begin{proof}Proof text.\\end{proof}\\end{theorem}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<theorem><title>My Theorem</title><statement><p>Some statement.</p></statement><proof><p>Proof text.</p></proof></theorem>`
+            )
+        );
+    });
+    it("places multiple proofs as siblings of statement", async () => {
+        html = process(
+            `\\begin{theorem}Some statement.\\begin{proof}First proof.\\end{proof}\\begin{proof}Second proof.\\end{proof}\\end{theorem}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<theorem><statement><p>Some statement.</p></statement><proof><p>First proof.</p></proof><proof><p>Second proof.</p></proof></theorem>`
+            )
+        );
+    });
     it("Gives an environment without statement a title", async () => {
         html = process(`\\begin{remark}[My remark]\na\n\\end{remark}`);
         return expect(await normalizeHtml(html)).toEqual(
