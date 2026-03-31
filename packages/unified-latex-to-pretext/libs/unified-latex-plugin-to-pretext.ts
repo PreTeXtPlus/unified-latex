@@ -8,12 +8,32 @@ import { match } from "@unified-latex/unified-latex-util-match";
 import { EXIT, visit } from "@unified-latex/unified-latex-util-visit";
 import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
 import { attachMacroArgs, gobbleArguments } from "@unified-latex/unified-latex-util-arguments";
+
+/** Replace Unicode characters produced by ligature expansion with plain ASCII. */
+function unicodeToAscii(str: string): string {
+    return str
+        .replace(/\u2014/g, "---")   // em dash
+        .replace(/\u2013/g, "--")    // en dash
+        .replace(/\u00A0/g, " ")     // non-breaking space
+        .replace(/\u201C/g, "``")    // left double quote
+        .replace(/\u201D/g, "''")    // right double quote
+        .replace(/\u2018/g, "`")     // left single quote
+        .replace(/\u2019/g, "'")     // right single quote / apostrophe
+        .replace(/\u00AB/g, "<<")    // left guillemet
+        .replace(/\u00BB/g, ">>")    // right guillemet
+        .replace(/\u2026/g, "...")   // ellipsis
+        .replace(/\u2009/g, " ")     // thin space
+        .replace(/\u2005/g, " ")     // four-per-em space
+        .replace(/\u2002/g, " ")     // en space
+        .replace(/\u2003/g, " ");    // em space
+}
 import { toPretextWithLoggerFactory } from "./pretext-subs/to-pretext";
 import {
     unifiedLatexToPretextLike,
     PluginOptions as HtmlLikePluginOptions,
 } from "./unified-latex-plugin-to-pretext-like";
 import { expandUserDefinedMacros } from "./pre-conversion-subs/expand-user-defined-macros";
+import { replaceQuoteLigatures } from "./pre-conversion-subs/replace-quote-ligatures";
 import {
     macros as pretextMacros,
     environments as pretextEnvironments,
@@ -42,6 +62,10 @@ export const unifiedLatexToPretext: Plugin<
 
         // expand user defined macros
         expandUserDefinedMacros(tree);
+
+        // Replace LaTeX quote ligatures (``...'' and `...') with \enquote{}/\sq{}
+        // macros BEFORE macro-argument attachment so they flow through the normal pipeline.
+        replaceQuoteLigatures(tree);
 
         // Attach PreTeXt-specific macro arguments
         attachMacroArgs(tree, pretextMacros);
@@ -105,6 +129,18 @@ export const unifiedLatexToPretext: Plugin<
                 value: "version='1.0' encoding='utf-8'",
             });
         }
+        // Replace any remaining Unicode characters with ASCII equivalents
+        // so the output is clean ASCII XML.
+        (function normalizeToAscii(nodes: Xast.Nodes[]) {
+            for (const node of nodes) {
+                if (node.type === "text") {
+                    node.value = unicodeToAscii(node.value);
+                } else if ("children" in node) {
+                    normalizeToAscii(node.children as Xast.Nodes[]);
+                }
+            }
+        })(ret.children);
+
         return ret;
     };
 };

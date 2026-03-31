@@ -286,6 +286,13 @@ export const macroReplacements: Record<
     insert: factory("insert"),
     stale: factory("stale"),
     // Character/symbol macros
+    // Dash and space ligature macros (injected by replaceQuoteLigatures pre-pass)
+    mdash: () => htmlLike({ tag: "mdash" }),
+    ndash: () => htmlLike({ tag: "ndash" }),
+    nbsp: () => htmlLike({ tag: "nbsp" }),
+    // Standard LaTeX section/pilcrow macros
+    P: () => htmlLike({ tag: "pilcrow" }),
+    S: () => htmlLike({ tag: "section-mark" }),
     copyright: () => htmlLike({ tag: "copyright" }),
     registered: () => htmlLike({ tag: "registered" }),
     trademark: () => htmlLike({ tag: "trademark" }),

@@ -888,4 +888,63 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             await normalizeHtml(`<listing><caption>My Code</caption><pre>\nx = 1\n</pre></listing>`)
         );
     });
+
+    // Quote ligature conversion
+    it("converts ``...'' double-quote ligatures to <q>", async () => {
+        html = process("He said ``hello'' to her.");
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml("He said <q>hello</q> to her.")
+        );
+    });
+    it("converts `...' single-quote ligatures to <sq>", async () => {
+        html = process("He said `hello' to her.");
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml("He said <sq>hello</sq> to her.")
+        );
+    });
+    it("preserves contractions and possessives", () => {
+        html = process("don't and it's and author's");
+        expect(html.trim()).toEqual("don't and it's and author's");
+    });
+    it("handles nested double inside double quotes", async () => {
+        html = process("``outer ``inner'' text''");
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml("<q>outer <q>inner</q> text</q>")
+        );
+    });
+    it("handles single quotes inside double quotes", async () => {
+        html = process("``He said `yes' to me.''");
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml("<q>He said <sq>yes</sq> to me.</q>")
+        );
+    });
+    it("does not match quotes across paragraph breaks", async () => {
+        html = process("``first paragraph\n\nsecond paragraph''");
+        // The unmatched `` becomes <lq/> and '' becomes <rq/> — no wrapping <q>
+        expect(html).not.toContain("<q>");
+    });
+    it("does not convert quotes in math mode", async () => {
+        html = process("$f'(x)$ and $g''(x)$");
+        // Primes in math should not become quotes
+        expect(html).not.toContain("<q>");
+        expect(html).not.toContain("<sq>");
+    });
+    it("handles multiple quote pairs in sequence", async () => {
+        html = process("``one'' and ``two''");
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml("<q>one</q> and <q>two</q>")
+        );
+    });
+    it("preserves contraction inside single-quoted phrase", () => {
+        html = process("`don't say that'");
+        expect(html.trim()).toEqual("<sq>don't say that</sq>");
+    });
+    it("converts -- to <ndash/> and --- to <mdash/>", () => {
+        html = process("pages 1--10 and an em---dash");
+        expect(html.trim()).toEqual("pages 1<ndash />10 and an em<mdash />dash");
+    });
+    it("converts ~ to <nbsp/>", () => {
+        html = process("Dr.~Smith");
+        expect(html.trim()).toEqual("Dr.<nbsp />Smith");
+    });
 });

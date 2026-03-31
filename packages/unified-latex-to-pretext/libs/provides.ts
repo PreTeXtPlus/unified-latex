@@ -56,6 +56,10 @@ export const macros: MacroInfoRecord = {
     PreFigure: { signature: "" },
     XeLaTeX: { signature: "" },
     timeofday: { signature: "" },
+    // Ligature replacement macros (injected by replaceQuoteLigatures pre-pass)
+    mdash: { signature: "" },
+    ndash: { signature: "" },
+    nbsp: { signature: "" },
     // Tracked-change macros
     sout: { signature: "m" },
     insert: { signature: "m" },
