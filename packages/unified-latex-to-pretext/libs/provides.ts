@@ -13,6 +13,14 @@ export const macros: MacroInfoRecord = {
     term: { signature: "m" },
     // Verbatim/code inline macro
     code: { signature: "m" },
+    // Division macros — same signature as \section
+    preface: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    biography: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    dedication: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    glossary: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    exercises: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    worksheet: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    readingquestions: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
     // Inline text macros
     fn: { signature: "m" },
     q: { signature: "m" },
@@ -62,4 +70,28 @@ export const environments: EnvInfoRecord = {
     data: { signature: "o" },
     // Case (sub-element of proof)
     case: { signature: "o" },
+    // Complex environments
+    poem: { signature: "o" },
+    sidebyside: { signature: "o" },
+    program: { signature: "o" },
+    console: { signature: "" },
+    sage: { signature: "" },
+    webwork: { signature: "o" },
+    task: { signature: "o" },
+    // Division environments — environment form with optional title
+    preface: { signature: "o" },
+    biography: { signature: "o" },
+    dedication: { signature: "o" },
+    glossary: { signature: "o" },
+    exercises: { signature: "o" },
+    exercisegroup: { signature: "o" },
+    subexercises: { signature: "o" },
+    worksheet: { signature: "o" },
+    readingquestions: { signature: "o" },
+    "reading-questions": { signature: "o" },
+    introduction: { signature: "o" },
+    conclusion: { signature: "o" },
+    paragraphs: { signature: "o" },
+    objectives: { signature: "o" },
+    outcomes: { signature: "o" },
 };

@@ -691,4 +691,148 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         expect(await normalizeHtml(process(`\\insert{new text}`))).toEqual(await normalizeHtml(`<insert>new text</insert>`));
         expect(await normalizeHtml(process(`\\stale{stale text}`))).toEqual(await normalizeHtml(`<stale>stale text</stale>`));
     });
+
+    // Division environments with macro-style and environment-style
+    it("converts \\preface{title} macro to <preface>", async () => {
+        html = process(`\\preface{My Preface}\n\nSome introductory content.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<preface><title>My Preface</title><p>Some introductory content.</p></preface>`)
+        );
+    });
+    it("converts \\begin{preface} environment to <preface>", async () => {
+        html = process(`\\begin{preface}[My Preface]\n\nSome introductory content.\n\\end{preface}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<preface><title>My Preface</title><p>Some introductory content.</p></preface>`)
+        );
+    });
+    it("converts \\biography{title} macro to <biography>", async () => {
+        html = process(`\\biography{Ada Lovelace}\n\nShe was a mathematician.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<biography><title>Ada Lovelace</title><p>She was a mathematician.</p></biography>`)
+        );
+    });
+    it("converts \\dedication{title} macro to <dedication>", async () => {
+        html = process(`\\dedication{To my students}\n\nWith gratitude.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<dedication><title>To my students</title><p>With gratitude.</p></dedication>`)
+        );
+    });
+    it("converts \\exercises{title} macro to <exercises>", async () => {
+        html = process(`\\exercises{Exercises for Section 1}\n\nSome exercises here.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<exercises><title>Exercises for Section 1</title><p>Some exercises here.</p></exercises>`)
+        );
+    });
+    it("converts \\worksheet{title} macro to <worksheet>", async () => {
+        html = process(`\\worksheet{Lab 1}\n\nDo problems 1-5.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<worksheet><title>Lab 1</title><p>Do problems 1-5.</p></worksheet>`)
+        );
+    });
+    it("converts \\readingquestions{title} macro to <reading-questions>", async () => {
+        html = process(`\\readingquestions{Reading Questions}\n\nWhat did you learn?`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<reading-questions><title>Reading Questions</title><p>What did you learn?</p></reading-questions>`)
+        );
+    });
+    it("converts \\begin{exercises} environment to <exercises>", async () => {
+        html = process(`\\begin{exercises}[More Exercises]\n\nExercise content.\n\\end{exercises}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<exercises><title>More Exercises</title><p>Exercise content.</p></exercises>`)
+        );
+    });
+    it("converts \\begin{introduction} environment to <introduction>", async () => {
+        html = process(`\\begin{introduction}\n\nThis section covers basics.\n\\end{introduction}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<introduction><p>This section covers basics.</p></introduction>`)
+        );
+    });
+    it("converts \\begin{conclusion} environment to <conclusion>", async () => {
+        html = process(`\\begin{conclusion}\n\nIn summary.\n\\end{conclusion}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<conclusion><p>In summary.</p></conclusion>`)
+        );
+    });
+    it("converts \\begin{objectives} and \\begin{outcomes} environments", async () => {
+        html = process(`\\begin{objectives}\n\nLearn to code.\n\\end{objectives}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<objectives><p>Learn to code.</p></objectives>`)
+        );
+        html = process(`\\begin{outcomes}\n\nStudents will understand X.\n\\end{outcomes}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<outcomes><p>Students will understand X.</p></outcomes>`)
+        );
+    });
+    it("converts \\begin{reading-questions} environment to <reading-questions>", async () => {
+        html = process(`\\begin{reading-questions}\n\nWhat did you read?\n\\end{reading-questions}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<reading-questions><p>What did you read?</p></reading-questions>`)
+        );
+    });
+    it("converts \\begin{paragraphs} environment to <paragraphs>", async () => {
+        html = process(`\\begin{paragraphs}[A Titled Aside]\n\nSome paragraph.\n\\end{paragraphs}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<paragraphs><title>A Titled Aside</title><p>Some paragraph.</p></paragraphs>`)
+        );
+    });
+    it("converts multiple peer divisions at the same level", async () => {
+        html = process(`\\section{Intro}\n\nIntro text.\n\n\\exercises{Practice}\n\nExercise text.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<section><title>Intro</title><p>Intro text.</p></section><exercises><title>Practice</title><p>Exercise text.</p></exercises>`)
+        );
+    });
+
+    // Group D: complex environments
+    it("converts \\begin{poem} to <poem> with stanzas and lines", async () => {
+        html = process(
+            `\\begin{poem}[The Road]\nTwo roads diverged\\\\\nIn a yellow wood.\n\nAnd sorry I could not\\\\\nTravel both.\n\\end{poem}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<poem><title>The Road</title><stanza><line>Two roads diverged</line><line>In a yellow wood.</line></stanza><stanza><line>And sorry I could not</line><line>Travel both.</line></stanza></poem>`
+            )
+        );
+    });
+    it("converts \\begin{sidebyside} to <sidebyside>", async () => {
+        html = process(`\\begin{sidebyside}\n\nLeft content.\n\nRight content.\n\\end{sidebyside}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<sidebyside><p>Left content.</p><p>Right content.</p></sidebyside>`)
+        );
+    });
+    it("converts \\begin{program} to <program><input>", async () => {
+        html = process(`\\begin{program}[python]\nx = 1 + 2\n\\end{program}`);
+        // Use trim comparison — normalizeHtml can't handle <input> (HTML void element)
+        expect(html.trim()).toEqual(`<program language="python"><input>x = 1 + 2</input></program>`);
+    });
+    it("converts \\begin{program} without language", async () => {
+        html = process(`\\begin{program}\nx = 1\n\\end{program}`);
+        expect(html.trim()).toEqual(`<program><input>x = 1</input></program>`);
+    });
+    it("converts \\begin{console} to <console>", async () => {
+        html = process(`\\begin{console}\n$ echo hello\nhello\n\\end{console}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<console>$ echo hello\nhello</console>`)
+        );
+    });
+    it("converts \\begin{sage} to <sage><input>", async () => {
+        html = process(`\\begin{sage}\nplot(sin(x), x, 0, 2*pi)\n\\end{sage}`);
+        // Use trim comparison — normalizeHtml can't handle <input> (HTML void element)
+        expect(html.trim()).toEqual(`<sage><input>plot(sin(x), x, 0, 2*pi)</input></sage>`);
+    });
+    it("converts \\begin{webwork} to <webwork>", async () => {
+        html = process(`\\begin{webwork}\nSome webwork content.\n\\end{webwork}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<webwork><p>Some webwork content.</p></webwork>`)
+        );
+    });
+    it("converts \\begin{task} to <task> with statement and optional hint/answer/solution", async () => {
+        html = process(`\\begin{task}[Find the derivative]\n\nCompute $f'(x)$.\n\\end{task}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<task><title>Find the derivative</title><statement><p>Compute <m>f'(x)</m>.</p></statement></task>`)
+        );
+        html = process(`\\begin{task}\n\nContent.\n\n\\begin{hint}A hint.\\end{hint}\n\\end{task}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<task><statement><p>Content.</p></statement><hint><p>A hint.</p></hint></task>`)
+        );
+    });
 });

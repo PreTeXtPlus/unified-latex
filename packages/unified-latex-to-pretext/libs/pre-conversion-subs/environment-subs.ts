@@ -251,6 +251,110 @@ export const environmentReplacements: Record<
             tag: "pre",
             content: [{ type: "string", content: printRaw(env.content) }],
         }),
+    // Complex environments
+    //   poem: split raw content by \\ (lines) and blank lines (stanzas)
+    poem: (env) => {
+        const args = getArgsContent(env);
+        const title = args[0];
+        const raw = printRaw(env.content).trim();
+        const stanzaTexts = raw.split(/\n[ \t]*\n/);
+        const stanzas = stanzaTexts
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .map((stanzaText) => {
+                // split lines on \\ (with optional trailing whitespace/newline)
+                const lineTexts = stanzaText
+                    .split(/\\\\[ \t]*\n?/)
+                    .map((l) => l.trim())
+                    .filter((l) => l.length > 0);
+                const lines = lineTexts.map((lineText) =>
+                    htmlLike({
+                        tag: "line",
+                        content: [{ type: "string", content: lineText }],
+                    })
+                );
+                return htmlLike({ tag: "stanza", content: lines });
+            });
+        // Fallback: if no stanzas could be parsed, emit one stanza with the raw text
+        if (stanzas.length === 0) {
+            stanzas.push(
+                htmlLike({
+                    tag: "stanza",
+                    content: [
+                        htmlLike({
+                            tag: "line",
+                            content: [{ type: "string", content: raw }],
+                        }),
+                    ],
+                })
+            );
+        }
+        const children: Ast.Node[] = [];
+        if (title) {
+            children.push(htmlLike({ tag: "title", content: title }));
+        }
+        children.push(...stanzas);
+        return htmlLike({ tag: "poem", content: children });
+    },
+    //   sidebyside: wrap content panels as-is
+    sidebyside: envFactory("sidebyside", {
+        requiresStatementTag: false,
+        extractTitleFromArgs: false,
+    }),
+    //   program: emit raw content inside <program><input>; language from optional arg
+    program: (env) => {
+        const args = getArgsContent(env);
+        const lang = args[0]
+            ? printRaw(args[0]).trim()
+            : undefined;
+        const raw = printRaw(env.content).trim();
+        const inputTag = htmlLike({
+            tag: "input",
+            content: [{ type: "string", content: raw }],
+        });
+        return htmlLike({
+            tag: "program",
+            content: [inputTag],
+            attributes: lang ? { language: lang } : {},
+        });
+    },
+    //   console: emit raw content inside <console>
+    console: (env) =>
+        htmlLike({
+            tag: "console",
+            content: [{ type: "string", content: printRaw(env.content).trim() }],
+        }),
+    //   sage: emit raw input inside <sage><input>
+    sage: (env) =>
+        htmlLike({
+            tag: "sage",
+            content: [
+                htmlLike({
+                    tag: "input",
+                    content: [{ type: "string", content: printRaw(env.content).trim() }],
+                }),
+            ],
+        }),
+    //   webwork: wrap content as-is (usually empty or with seed attr)
+    webwork: envFactory("webwork", { requiresStatementTag: false }),
+    // Structural/frontmatter environments
+    preface: envFactory("preface"),
+    biography: envFactory("biography"),
+    dedication: envFactory("dedication"),
+    glossary: envFactory("glossary"),
+    biblio: envFactory("biblio"),
+    // Division-level block environments
+    exercises: envFactory("exercises"),
+    exercisegroup: envFactory("exercisegroup"),
+    subexercises: envFactory("subexercises"),
+    worksheet: envFactory("worksheet"),
+    "reading-questions": envFactory("reading-questions"),
+    readingquestions: envFactory("reading-questions"),
+    introduction: envFactory("introduction"),
+    conclusion: envFactory("conclusion"),
+    paragraphs: envFactory("paragraphs"),
+    objectives: envFactory("objectives"),
+    outcomes: envFactory("outcomes"),
     ...genEnvironmentReplacements(),
 };
 

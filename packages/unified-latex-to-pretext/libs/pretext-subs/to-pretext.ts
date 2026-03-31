@@ -90,25 +90,29 @@ export function toPretextWithLoggerFactory(
             case "environment":
                 // check if it's a new environment made to replace a division node
                 if (isMappedEnviron(node)) {
-                    // get the division macro associated with this node
-                    let divisionName = divisions.find(
+                    // get the division entry associated with this node
+                    const divEntry = divisions.find(
                         (x) => x.mappedEnviron === node.env
-                    )?.division;
+                    );
 
                     // for subparagraph, give a warning since pretext has no equivalent tag
-                    if (divisionName === "subparagraph") {
+                    if (divEntry?.division === "subparagraph") {
                         logger(
                             `Warning: There is no equivalent tag for "subparagraph", "paragraphs" was used as a replacement.`,
                             node
                         );
                     }
 
-                    // paragraph and subparagraph become paragraphs
+                    // Use pretextTag if set, otherwise use the division macro name.
+                    // paragraph and subparagraph both map to "paragraphs".
+                    let tagName =
+                        divEntry?.pretextTag ??
+                        divEntry?.division;
                     if (
-                        divisionName === "paragraph" ||
-                        divisionName === "subparagraph"
+                        tagName === "paragraph" ||
+                        tagName === "subparagraph"
                     ) {
-                        divisionName = "paragraphs";
+                        tagName = "paragraphs";
                     }
 
                     // look for any additional attributes in renderInfo and add them to the attributes of the tag
@@ -128,8 +132,8 @@ export function toPretextWithLoggerFactory(
 
                     const titleTag = x("title", title?.flatMap(toPretext));
 
-                    if (divisionName) {
-                        return x(divisionName, attributes,
+                    if (tagName) {
+                        return x(tagName, attributes,
                             [
                             titleTag,
                             ...node.content.flatMap(toPretext),
