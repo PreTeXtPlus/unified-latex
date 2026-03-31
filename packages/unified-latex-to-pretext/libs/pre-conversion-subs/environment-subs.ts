@@ -343,6 +343,7 @@ export const environmentReplacements: Record<
     dedication: envFactory("dedication"),
     glossary: envFactory("glossary"),
     biblio: envFactory("biblio"),
+    gi: envFactory("gi", { requiresStatementTag: false }),
     // Division-level block environments
     exercises: envFactory("exercises"),
     exercisegroup: envFactory("exercisegroup"),
@@ -350,11 +351,26 @@ export const environmentReplacements: Record<
     worksheet: envFactory("worksheet"),
     "reading-questions": envFactory("reading-questions"),
     readingquestions: envFactory("reading-questions"),
+    solutions: envFactory("solutions"),
     introduction: envFactory("introduction"),
     conclusion: envFactory("conclusion"),
     paragraphs: envFactory("paragraphs"),
     objectives: envFactory("objectives"),
     outcomes: envFactory("outcomes"),
+    // Figure-like named containers
+    list: envFactory("list", {
+        requiresStatementTag: false,
+        wrapContentInPars: false,
+        extractTitleFromArgs: false,
+    }),
+    listing: envFactory("listing", {
+        requiresStatementTag: false,
+        wrapContentInPars: false,
+        extractTitleFromArgs: false,
+    }),
+    // SideBySide sub-structure
+    sbsgroup: envFactory("sbsgroup", { requiresStatementTag: false }),
+    stack: envFactory("stack", { requiresStatementTag: false }),
     ...genEnvironmentReplacements(),
 };
 

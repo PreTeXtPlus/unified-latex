@@ -44,6 +44,7 @@ export const divisionGroups: DivisionEntry[][] = [
     [
         { division: "section", mappedEnviron: "_section" },
         { division: "exercises", mappedEnviron: "_exercises" },
+        { division: "solutions", mappedEnviron: "_solutions" },
         { division: "worksheet", mappedEnviron: "_worksheet" },
         {
             division: "readingquestions",

@@ -11,8 +11,9 @@ import {
 export const macros: MacroInfoRecord = {
     // PreTeXt-specific macro
     term: { signature: "m" },
-    // Verbatim/code inline macro
+    // Verbatim/code inline macros
     code: { signature: "m" },
+    lstinline: { signature: "m" },
     // Division macros — same signature as \section
     preface: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
     biography: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
@@ -21,11 +22,13 @@ export const macros: MacroInfoRecord = {
     exercises: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
     worksheet: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
     readingquestions: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
+    solutions: { signature: "s o m", renderInfo: { breakAround: true, inParMode: true, namedArguments: ["starred", "tocTitle", "title"] } },
     // Inline text macros
     fn: { signature: "m" },
     q: { signature: "m" },
     sq: { signature: "m" },
     enquote: { signature: "m" },
+    enquotestar: { signature: "m" },
     abbr: { signature: "m" },
     ac: { signature: "m" },
     acro: { signature: "m" },
@@ -35,10 +38,24 @@ export const macros: MacroInfoRecord = {
     booktitle: { signature: "m" },
     pubtitle: { signature: "m" },
     articletitle: { signature: "m" },
+    // XML helper macros
+    xmltag: { signature: "m" },
+    xmlattr: { signature: "m" },
     // Misc inline macros
     taxon: { signature: "m" },
     kbd: { signature: "m" },
     icon: { signature: "m" },
+    // Generator macros (zero-arg, no signature needed — listed for completeness)
+    nb: { signature: "" },
+    ps: { signature: "" },
+    vs: { signature: "" },
+    viz: { signature: "" },
+    etal: { signature: "" },
+    circa: { signature: "" },
+    ca: { signature: "" },
+    PreFigure: { signature: "" },
+    XeLaTeX: { signature: "" },
+    timeofday: { signature: "" },
     // Tracked-change macros
     sout: { signature: "m" },
     insert: { signature: "m" },
@@ -94,4 +111,11 @@ export const environments: EnvInfoRecord = {
     paragraphs: { signature: "o" },
     objectives: { signature: "o" },
     outcomes: { signature: "o" },
+    // Additional division/structural environments
+    solutions: { signature: "o" },
+    gi: { signature: "o" },
+    sbsgroup: { signature: "o" },
+    stack: { signature: "o" },
+    list: { signature: "o" },
+    listing: { signature: "o" },
 };
