@@ -233,7 +233,7 @@ export const macroReplacements: Record<
     tex: (node) => {
         return htmlLike({ tag: "tex" });
     },
-    // Generator macros (Group F)
+    // Generator macros
     eg: () => htmlLike({ tag: "eg" }),
     ie: () => htmlLike({ tag: "ie" }),
     etc: () => htmlLike({ tag: "etc" }),
@@ -244,9 +244,33 @@ export const macroReplacements: Record<
     BC: () => htmlLike({ tag: "bc" }),
     AM: () => htmlLike({ tag: "am" }),
     PM: () => htmlLike({ tag: "pm" }),
-    // Verbatim/code macros (Group H)
+    // Verbatim/code macros
     code: factory("c"),
-    // Character/symbol macros (Group G)
+    // Inline text macros
+    fn: factory("fn"),
+    footnote: factory("fn"),
+    q: factory("q"),
+    sq: factory("sq"),
+    enquote: factory("q"),
+    abbr: factory("abbr"),
+    ac: factory("acro"),
+    acro: factory("acro"),
+    init: factory("init"),
+    foreign: factory("foreign"),
+    foreignlanguage: factory("foreign"),
+    booktitle: factory("pubtitle"),
+    pubtitle: factory("pubtitle"),
+    articletitle: factory("articletitle"),
+    // Misc inline macros
+    taxon: factory("taxon"),
+    kbd: factory("kbd"),
+    icon: factory("icon"),
+    fillin: () => htmlLike({ tag: "fillin" }),
+    // Tracked-change macros
+    sout: factory("delete"),
+    insert: factory("insert"),
+    stale: factory("stale"),
+    // Character/symbol macros
     copyright: () => htmlLike({ tag: "copyright" }),
     registered: () => htmlLike({ tag: "registered" }),
     trademark: () => htmlLike({ tag: "trademark" }),

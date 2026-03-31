@@ -11,8 +11,30 @@ import {
 export const macros: MacroInfoRecord = {
     // PreTeXt-specific macro
     term: { signature: "m" },
-    // Verbatim/code inline macro (Group H)
+    // Verbatim/code inline macro
     code: { signature: "m" },
+    // Inline text macros
+    fn: { signature: "m" },
+    q: { signature: "m" },
+    sq: { signature: "m" },
+    enquote: { signature: "m" },
+    abbr: { signature: "m" },
+    ac: { signature: "m" },
+    acro: { signature: "m" },
+    init: { signature: "m" },
+    foreign: { signature: "m" },
+    foreignlanguage: { signature: "m m" },
+    booktitle: { signature: "m" },
+    pubtitle: { signature: "m" },
+    articletitle: { signature: "m" },
+    // Misc inline macros
+    taxon: { signature: "m" },
+    kbd: { signature: "m" },
+    icon: { signature: "m" },
+    // Tracked-change macros
+    sout: { signature: "m" },
+    insert: { signature: "m" },
+    stale: { signature: "m" },
 };
 
 /**
