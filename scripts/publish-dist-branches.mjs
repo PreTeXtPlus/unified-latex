@@ -84,15 +84,14 @@ try {
 } catch {}
 
 const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ul-publish-"));
+const rootUrl =
+    "file://" + ROOT.replace(/\\/g, "/").replace(/^([A-Za-z]):/, "/$1:");
 
 console.log(`Publishing ${packages.length} package branch(es) with prefix '${branchPrefix}/'...`);
 
 try {
     exec("git init", tmpDir);
-    if (doPush) {
-        const remoteUrl = exec("git remote get-url origin", ROOT);
-        exec(`git remote add origin \"${remoteUrl}\"`, tmpDir);
-    }
+    exec(`git remote add origin \"${rootUrl}\"`, tmpDir);
 
     for (const pkg of packages) {
         const branch = `${branchPrefix}/${pkg}`;
@@ -116,21 +115,24 @@ try {
             `git -c user.name=\"${gitUser}\" -c user.email=\"${gitEmail}\" commit -m \"dist: ${pkg} v${pkgJson.version}\"`,
             tmpDir
         );
+        exec(`git push --force origin \"${branch}:refs/heads/${branch}\"`, tmpDir);
 
         process.stdout.write("done\n");
     }
-
-    if (doPush) {
-        const refspecs = packages
-            .map((pkg) => {
-                const branch = `${branchPrefix}/${pkg}`;
-                return `\"${branch}:refs/heads/${branch}\"`;
-            })
-            .join(" ");
-        exec(`git push --force origin ${refspecs}`, tmpDir);
-    }
 } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+}
+
+if (doPush) {
+    // Push all branches to the remote in a single operation to avoid
+    // repeated handshakes that can cause transient server-side failures.
+    const refspecs = packages
+        .map((pkg) => {
+            const branch = `${branchPrefix}/${pkg}`;
+            return `\"${branch}:refs/heads/${branch}\"`;
+        })
+        .join(" ");
+    exec(`git push --force origin ${refspecs}`, ROOT);
 }
 
 console.log("Done.");
