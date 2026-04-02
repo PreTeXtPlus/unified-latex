@@ -1,5 +1,10 @@
 # unified-latex Changelog
 
+### v1.8.4
+- Support most environments and macros for PreTeXt conversion.
+- Labels handled correctly in PreTeXt conversion.
+- LaTeX quotes converted to `<q>` in PreTeXt conversion.
+
 ### v1.8.3
  - Support `\ref` in PreTeXt conversion
  - Better use of UnifiedJS to parse but not print LaTeX

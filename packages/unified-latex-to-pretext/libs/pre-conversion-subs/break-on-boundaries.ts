@@ -16,18 +16,56 @@ import { VFileMessage } from "vfile-message";
 import { makeWarningMessage } from "./utils";
 
 /**
- * All the divisions, where each item is {division macro, mapped environment}.
- * Note that this is ordered from the "largest" division to the "smallest" division.
+ * All the divisions, grouped by level. Each group contains macros that break
+ * content at the same depth. Multiple macros in the same group are peers
+ * (e.g. \section and \exercises both create section-level divisions).
+ *
+ * Optional `pretextTag` overrides the PreTeXt element name when it differs
+ * from the LaTeX macro name (e.g. `readingquestions` → `reading-questions`).
  */
-export const divisions: { division: string; mappedEnviron: string }[] = [
-    { division: "part", mappedEnviron: "_part" },
-    { division: "chapter", mappedEnviron: "_chapter" },
-    { division: "section", mappedEnviron: "_section" },
-    { division: "subsection", mappedEnviron: "_subsection" },
-    { division: "subsubsection", mappedEnviron: "_subsubsection" },
-    { division: "paragraph", mappedEnviron: "_paragraph" },
-    { division: "subparagraph", mappedEnviron: "_subparagraph" },
+export type DivisionEntry = {
+    division: string;
+    mappedEnviron: string;
+    pretextTag?: string;
+};
+
+export const divisionGroups: DivisionEntry[][] = [
+    // Group 0: book-part level
+    [{ division: "part", mappedEnviron: "_part" }],
+    // Group 1: chapter level
+    [
+        { division: "chapter", mappedEnviron: "_chapter" },
+        { division: "preface", mappedEnviron: "_preface" },
+        { division: "biography", mappedEnviron: "_biography" },
+        { division: "dedication", mappedEnviron: "_dedication" },
+        { division: "glossary", mappedEnviron: "_glossary" },
+    ],
+    // Group 2: section level
+    [
+        { division: "section", mappedEnviron: "_section" },
+        { division: "exercises", mappedEnviron: "_exercises" },
+        { division: "solutions", mappedEnviron: "_solutions" },
+        { division: "worksheet", mappedEnviron: "_worksheet" },
+        {
+            division: "readingquestions",
+            mappedEnviron: "_readingquestions",
+            pretextTag: "reading-questions",
+        },
+    ],
+    // Group 3: subsection level
+    [{ division: "subsection", mappedEnviron: "_subsection" }],
+    // Group 4: subsubsection level
+    [{ division: "subsubsection", mappedEnviron: "_subsubsection" }],
+    // Group 5: paragraph level
+    [{ division: "paragraph", mappedEnviron: "_paragraph" }],
+    // Group 6: subparagraph level
+    [{ division: "subparagraph", mappedEnviron: "_subparagraph" }],
 ];
+
+/**
+ * Flat view of all division entries — useful for lookups.
+ */
+export const divisions: DivisionEntry[] = divisionGroups.flat();
 
 // check if a macro is a division macro
 const isDivisionMacro = match.createMacroMatcher(
@@ -103,21 +141,23 @@ export function breakOnBoundaries(ast: Ast.Ast): { messages: VFileMessage[] } {
 
 /**
  * Recursively breaks up the AST at the division macros.
+ * Each depth corresponds to a group of peer divisions in `divisionGroups`.
  */
 function breakUp(content: Ast.Node[], depth: number): Ast.Node[] {
-    // broke up all divisions
-    if (depth > 6) {
+    if (depth >= divisionGroups.length) {
         return content;
     }
 
-    const splits = splitOnMacro(content, divisions[depth].division);
+    const group = divisionGroups[depth];
+    const macroNames = group.map((d) => d.division);
+    const splits = splitOnMacro(content, macroNames);
 
     // go through each segment to recursively break
     for (let i = 0; i < splits.segments.length; i++) {
         splits.segments[i] = breakUp(splits.segments[i], depth + 1);
     }
 
-    createEnvironments(splits, divisions[depth].mappedEnviron);
+    createEnvironments(splits, group);
 
     // rebuild this part of the AST
     return unsplitOnMacro(splits);
@@ -125,15 +165,22 @@ function breakUp(content: Ast.Node[], depth: number): Ast.Node[] {
 
 /**
  * Create the new environments that replace the division macros.
+ * Each macro in `splits.macros` is looked up in `group` to find its mapped
+ * environment name, allowing multiple macro types at the same depth level.
  */
 function createEnvironments(
     splits: { segments: Ast.Node[][]; macros: Ast.Macro[] },
-    newEnviron: string
+    group: DivisionEntry[]
 ): void {
+    const macroToEnv = new Map(group.map((d) => [d.division, d.mappedEnviron]));
+
     // loop through segments (skipping first segment)
     for (let i = 1; i < splits.segments.length; i++) {
+        const macro = splits.macros[i - 1];
+        const mappedEnv = macroToEnv.get(macro.content) ?? "_unknown";
+
         // get the title
-        const title = getNamedArgsContent(splits.macros[i - 1])["title"];
+        const title = getNamedArgsContent(macro)["title"];
         const titleArg: Ast.Argument[] = [];
 
         // create title argument
@@ -142,6 +189,6 @@ function createEnvironments(
         }
 
         // wrap segment with a new environment
-        splits.segments[i] = [env(newEnviron, splits.segments[i], titleArg)];
+        splits.segments[i] = [env(mappedEnv, splits.segments[i], titleArg)];
     }
 }

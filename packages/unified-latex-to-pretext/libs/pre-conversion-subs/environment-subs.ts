@@ -1,4 +1,7 @@
-import { htmlLike } from "@unified-latex/unified-latex-util-html-like";
+import {
+    htmlLike,
+    isHtmlLikeTag,
+} from "@unified-latex/unified-latex-util-html-like";
 import * as Ast from "@unified-latex/unified-latex-types";
 import {
     getArgsContent,
@@ -6,6 +9,7 @@ import {
 } from "@unified-latex/unified-latex-util-arguments";
 import { match } from "@unified-latex/unified-latex-util-match";
 import { wrapPars } from "../wrap-pars";
+import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
 import { VisitInfo } from "@unified-latex/unified-latex-util-visit";
 import { VFile } from "vfile";
 import { makeWarningMessage } from "./utils";
@@ -105,6 +109,18 @@ interface EnvFactoryOptions {
     warningMessage?: string;
 }
 
+/**
+ * Tags that should be siblings of `<statement>` rather than children of it,
+ * when nested inside a theorem-like or exercise-like environment.
+ * For example, `<proof>` must follow `<statement>` inside `<theorem>`.
+ */
+const STATEMENT_SIBLING_TAGS = new Set([
+    "proof",
+    "hint",
+    "answer",
+    "solution",
+]);
+
 function envFactory(
     tag: string,
     options: EnvFactoryOptions = {}
@@ -124,16 +140,39 @@ function envFactory(
         }
 
         // Wrap content of the environment in paragraph tags
-        let content = wrapContentInPars ? wrapPars(env.content) : env.content;
+        let content: Ast.Node[];
 
         // Add a statement around the contents of the environment if requested.
+        // Any nested environments that must be siblings of <statement> (e.g. <proof>)
+        // are extracted before calling wrapPars so they don't end up buried inside a
+        // paragraph tag, then placed after the <statement> tag.
         if (requiresStatementTag) {
+            const statementEnvContent: Ast.Node[] = [];
+            const statementSiblings: Ast.Node[] = [];
+            for (const node of env.content) {
+                if (
+                    isHtmlLikeTag(node) &&
+                    STATEMENT_SIBLING_TAGS.has(
+                        (node as Ast.Macro).content.slice("html-tag:".length)
+                    )
+                ) {
+                    statementSiblings.push(node);
+                } else {
+                    statementEnvContent.push(node);
+                }
+            }
+            const statementContent = wrapContentInPars
+                ? wrapPars(statementEnvContent)
+                : statementEnvContent;
             content = [
                 htmlLike({
                     tag: "statement",
-                    content: content,
+                    content: statementContent,
                 }),
+                ...statementSiblings,
             ];
+        } else {
+            content = wrapContentInPars ? wrapPars(env.content) : env.content;
         }
 
         // Add a title tag if the environment has a title
@@ -206,6 +245,132 @@ export const environmentReplacements: Record<
         wrapContentInPars: false,
         extractTitleFromArgs: false,
     }),
+    // Verbatim/code block (Group H): emit raw content inside <pre>
+    code: (env) =>
+        htmlLike({
+            tag: "pre",
+            content: [{ type: "string", content: printRaw(env.content) }],
+        }),
+    // Complex environments
+    //   poem: split raw content by \\ (lines) and blank lines (stanzas)
+    poem: (env) => {
+        const args = getArgsContent(env);
+        const title = args[0];
+        const raw = printRaw(env.content).trim();
+        const stanzaTexts = raw.split(/\n[ \t]*\n/);
+        const stanzas = stanzaTexts
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .map((stanzaText) => {
+                // split lines on \\ (with optional trailing whitespace/newline)
+                const lineTexts = stanzaText
+                    .split(/\\\\[ \t]*\n?/)
+                    .map((l) => l.trim())
+                    .filter((l) => l.length > 0);
+                const lines = lineTexts.map((lineText) =>
+                    htmlLike({
+                        tag: "line",
+                        content: [{ type: "string", content: lineText }],
+                    })
+                );
+                return htmlLike({ tag: "stanza", content: lines });
+            });
+        // Fallback: if no stanzas could be parsed, emit one stanza with the raw text
+        if (stanzas.length === 0) {
+            stanzas.push(
+                htmlLike({
+                    tag: "stanza",
+                    content: [
+                        htmlLike({
+                            tag: "line",
+                            content: [{ type: "string", content: raw }],
+                        }),
+                    ],
+                })
+            );
+        }
+        const children: Ast.Node[] = [];
+        if (title) {
+            children.push(htmlLike({ tag: "title", content: title }));
+        }
+        children.push(...stanzas);
+        return htmlLike({ tag: "poem", content: children });
+    },
+    //   sidebyside: wrap content panels as-is
+    sidebyside: envFactory("sidebyside", {
+        requiresStatementTag: false,
+        extractTitleFromArgs: false,
+    }),
+    //   program: emit raw content inside <program><input>; language from optional arg
+    program: (env) => {
+        const args = getArgsContent(env);
+        const lang = args[0]
+            ? printRaw(args[0]).trim()
+            : undefined;
+        const raw = printRaw(env.content).trim();
+        const inputTag = htmlLike({
+            tag: "input",
+            content: [{ type: "string", content: raw }],
+        });
+        return htmlLike({
+            tag: "program",
+            content: [inputTag],
+            attributes: lang ? { language: lang } : {},
+        });
+    },
+    //   console: emit raw content inside <console>
+    console: (env) =>
+        htmlLike({
+            tag: "console",
+            content: [{ type: "string", content: printRaw(env.content).trim() }],
+        }),
+    //   sage: emit raw input inside <sage><input>
+    sage: (env) =>
+        htmlLike({
+            tag: "sage",
+            content: [
+                htmlLike({
+                    tag: "input",
+                    content: [{ type: "string", content: printRaw(env.content).trim() }],
+                }),
+            ],
+        }),
+    //   webwork: wrap content as-is (usually empty or with seed attr)
+    webwork: envFactory("webwork", { requiresStatementTag: false }),
+    // Structural/frontmatter environments
+    preface: envFactory("preface"),
+    biography: envFactory("biography"),
+    dedication: envFactory("dedication"),
+    glossary: envFactory("glossary"),
+    biblio: envFactory("biblio"),
+    gi: envFactory("gi", { requiresStatementTag: false }),
+    // Division-level block environments
+    exercises: envFactory("exercises"),
+    exercisegroup: envFactory("exercisegroup"),
+    subexercises: envFactory("subexercises"),
+    worksheet: envFactory("worksheet"),
+    "reading-questions": envFactory("reading-questions"),
+    readingquestions: envFactory("reading-questions"),
+    solutions: envFactory("solutions"),
+    introduction: envFactory("introduction"),
+    conclusion: envFactory("conclusion"),
+    paragraphs: envFactory("paragraphs"),
+    objectives: envFactory("objectives"),
+    outcomes: envFactory("outcomes"),
+    // Figure-like named containers
+    list: envFactory("list", {
+        requiresStatementTag: false,
+        wrapContentInPars: false,
+        extractTitleFromArgs: false,
+    }),
+    listing: envFactory("listing", {
+        requiresStatementTag: false,
+        wrapContentInPars: false,
+        extractTitleFromArgs: false,
+    }),
+    // SideBySide sub-structure
+    sbsgroup: envFactory("sbsgroup", { requiresStatementTag: false }),
+    stack: envFactory("stack", { requiresStatementTag: false }),
     ...genEnvironmentReplacements(),
 };
 
@@ -230,6 +395,12 @@ function genEnvironmentReplacements() {
             requiresStatement: true,
             aliases: ["con", "conj", "conjec"],
         },
+        activity: { requiresStatement: false, aliases: [] },
+        aside: { requiresStatement: false, aliases: [] },
+        assemblage: { requiresStatement: false, aliases: [] },
+        biographical: { requiresStatement: false, aliases: [] },
+        case: { requiresStatement: false, aliases: [] },
+        computation: { requiresStatement: false, aliases: ["comp"] },
         construction: { requiresStatement: false, aliases: [] },
         convention: { requiresStatement: false, aliases: ["conv"] },
         corollary: {
@@ -245,10 +416,12 @@ function genEnvironmentReplacements() {
             aliases: ["exam", "exa", "eg", "exmp", "expl", "exm"],
         },
         exercise: { requiresStatement: true, aliases: ["exer", "exers"] },
+        data: { requiresStatement: false, aliases: [] },
         exploration: { requiresStatement: false, aliases: [] },
         fact: { requiresStatement: true, aliases: [] },
         heuristic: { requiresStatement: true, aliases: [] },
         hint: { requiresStatement: false, aliases: [] },
+        historical: { requiresStatement: false, aliases: [] },
         hypothesis: { requiresStatement: true, aliases: ["hyp"] },
         identity: { requiresStatement: true, aliases: ["idnty"] },
         insight: { requiresStatement: false, aliases: [] },
@@ -280,6 +453,7 @@ function genEnvironmentReplacements() {
             aliases: ["rem", "rmk", "rema", "bem", "subrem"],
         },
         task: { requiresStatement: true, aliases: [] },
+        technology: { requiresStatement: false, aliases: ["tech"] },
         theorem: {
             requiresStatement: true,
             aliases: ["thm", "theo", "theor", "thmss", "thrm"],
