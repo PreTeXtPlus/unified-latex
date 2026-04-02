@@ -127,6 +127,7 @@ special_macro "special macro" // for the special macros like \[ \] and \begin{} 
     / verbatim_minted
     // verbatim environment
     / verbatim_minted_environment
+    / verbatim_environment_with_optional_arg
     / verbatim_environment
     // display math with \[...\]
     / begin_display_math
@@ -247,6 +248,31 @@ verbatim_minted_environment "verbatim minted environment"
             });
         }
 
+verbatim_environment_with_optional_arg "verbatim environment with optional arg"
+    = begin_env
+        begin_group
+        env:verbatim_env_name_allows_optional_arg
+        end_group
+        option:square_bracket_argument?
+        body:$(
+            !(
+                    end_env
+                        end_env:group
+                        & { return compare_env({ content: [env] }, end_env); }
+                )
+                x:. { return x; }
+        )*
+        end_env
+        begin_group
+        verbatim_env_name_allows_optional_arg
+        end_group {
+            const content = option ? [...option, { type: "string", content: body }] : [{ type: "string", content: body }];
+            return createNode("environment", {
+                env,
+                content,
+            });
+        }
+
 verbatim_environment "verbatim environment"
     = begin_env
         begin_group
@@ -271,15 +297,23 @@ verbatim_environment "verbatim environment"
         }
 
 verbatim_env_name
-    // standard verbatim enviroments. `verbatim*` must be listed first
+    // standard verbatim environments. `verbatim*` must be listed first
     = "verbatim*"
     / "verbatim"
     / "filecontents*"
     / "filecontents"
     // comment environment provided by \usepackage{verbatim}
     / "comment"
-    // lstlisting environment provided by \usepackage{listings}
-    / "lstlisting"
+
+// Names of verbatim environments that allow optional arguments.
+// For example
+// \begin{lstlisting}[language=Python]
+// XXX
+// \end{lstlisting}
+// The `[language=Python]` part should not be parsed as part of the verbatim content.
+verbatim_env_name_allows_optional_arg
+    // lstlisting environment provided by \usepackage{listings}.
+    = "lstlisting"
 
 macro "macro"
     = m:(escape n:char+ { return n.join(""); } / escape n:. { return n; }) {

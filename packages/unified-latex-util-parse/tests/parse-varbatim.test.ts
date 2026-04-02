@@ -5,6 +5,7 @@ import { printRaw } from "@unified-latex/unified-latex-util-print-raw";
 import { parseMath } from "../libs/parse-math";
 import { trimRenderInfo } from "@unified-latex/unified-latex-util-render-info";
 import { SP, arg, args, m, s, env } from "@unified-latex/unified-latex-builder";
+import { parseMinimal } from "../libs/parse-minimal";
 
 /* eslint-env jest */
 
@@ -15,6 +16,59 @@ console.log = (...args) => {
 };
 
 describe("unified-latex-util-parse", () => {
+    it("Parses verbatim environment 'verbatim'", () => {
+        expect(
+            trimRenderInfo(parse("\\begin{verbatim}some code$\\end{verbatim}"))
+        ).toEqual({
+            type: "root",
+            content: [
+                {
+                    env: "verbatim",
+                    type: "verbatim",
+                    content: "some code$",
+                },
+            ],
+        });
+    });
+    it("Parses verbatim environment 'lstlisting'", () => {
+        expect(
+            trimRenderInfo(
+                parseMinimal("\\begin{lstlisting}some code$\\end{lstlisting}")
+            )
+        ).toEqual({
+            type: "root",
+            content: [
+                {
+                    env: "lstlisting",
+                    type: "environment",
+                    content: [s("some code$")],
+                },
+            ],
+        });
+        expect(
+            trimRenderInfo(
+                parseMinimal(
+                    "\\begin{lstlisting}[numbers=left]some code$\\end{lstlisting}"
+                )
+            )
+        ).toEqual({
+            type: "root",
+            content: [
+                {
+                    env: "lstlisting",
+                    type: "environment",
+                    content: [
+                        s("["),
+                        s("numbers"),
+                        s("="),
+                        s("left"),
+                        s("]"),
+                        s("some code$"),
+                    ],
+                },
+            ],
+        });
+    });
     it("Parses verbatim arguments from `minted` directly as strings", () => {
         expect(trimRenderInfo(parse("\\lstinline{some_code$}"))).toEqual({
             type: "root",

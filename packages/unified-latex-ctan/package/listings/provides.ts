@@ -18,4 +18,6 @@ export const macros: MacroInfoRecord = {
     lstloadlanguages: { signature: "m" },
 };
 
-export const environments: EnvInfoRecord = {};
+export const environments: EnvInfoRecord = {
+    lstlisting: { signature: "o", renderInfo: { pgfkeysArgs: true } },
+};
