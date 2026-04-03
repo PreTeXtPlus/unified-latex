@@ -1,12 +1,12 @@
 {
     "name": "@unified-latex/unified-latex-util-render-info",
-    "version": "1.8.3",
+    "version": "1.8.4",
     "description": "Functions for modifying a unified-latex AST",
     "main": "dist/index.js",
     "type": "module",
     "dependencies": {
-        "@unified-latex/unified-latex-types": "^1.8.0",
-        "@unified-latex/unified-latex-util-visit": "^1.8.3"
+        "@unified-latex/unified-latex-types": "^1.8.4",
+        "@unified-latex/unified-latex-util-visit": "^1.8.4"
     },
     "files": [
         "dist/**/*.ts",
