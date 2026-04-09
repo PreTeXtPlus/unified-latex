@@ -16,6 +16,17 @@ import { VFileMessage } from "vfile-message";
 import { makeWarningMessage } from "./utils";
 
 /**
+ * Environments from the exam documentclass that use macros (`\part`, `\subpart`, etc.)
+ * that conflict with division macros. These environments must be skipped by
+ * `breakOnBoundaries` so their item macros are preserved.
+ */
+const EXAM_LIST_ENVIRONMENTS = ["parts", "subparts", "subsubparts"];
+
+export const isExamListEnviron = match.createEnvironmentMatcher(
+    EXAM_LIST_ENVIRONMENTS
+);
+
+/**
  * All the divisions, where each item is {division macro, mapped environment}.
  * Note that this is ordered from the "largest" division to the "smallest" division.
  */
@@ -86,14 +97,26 @@ export function breakOnBoundaries(ast: Ast.Ast): { messages: VFileMessage[] } {
         else if (anyEnvironment(node) && isMappedEnviron(node)) {
             return;
         }
+        // skip exam list environments — their \part/\subpart macros are not division macros
+        else if (anyEnvironment(node) && isExamListEnviron(node)) {
+            return;
+        }
 
         // now break up the divisions, starting at part
         node.content = breakUp(node.content, 0);
     });
 
-    replaceNode(ast, (node) => {
-        // remove all old division nodes
+    replaceNode(ast, (node, info) => {
+        // remove all old division nodes, but preserve exam-class macros (like \part)
+        // that live inside exam list environments (parts, subparts, subsubparts)
         if (anyMacro(node) && isDivisionMacro(node)) {
+            if (
+                info.parents.some(
+                    (p) => anyEnvironment(p) && isExamListEnviron(p)
+                )
+            ) {
+                return;
+            }
             return null;
         }
     });
