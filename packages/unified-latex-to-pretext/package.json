@@ -63,6 +63,7 @@
         "compile": "wireit",
         "compile:cjs": "wireit",
         "compile:esm": "wireit",
+        "demo": "npm run build && vite --config demo/vite.config.ts",
         "package": "node ../../scripts/make-package.mjs",
         "publish": "cd dist && npm publish",
         "test": "vitest"
