@@ -298,4 +298,38 @@ Second paragraph.\end{questions}`
             )
         );
     });
+
+    it("uses \\title inside questions environment as worksheet title", async () => {
+        html = process(
+            String.raw`\begin{questions}\title{My Worksheet}\question First\question Second\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<title>My Worksheet</title>` +
+                    `<exercise><statement><p>First</p></statement></exercise>` +
+                    `<exercise><statement><p>Second</p></statement></exercise>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("combines \\title with page breaks", async () => {
+        html = process(
+            String.raw`\begin{questions}\title{Paged Worksheet}\question First\newpage\question Second\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<title>Paged Worksheet</title>` +
+                    `<page>` +
+                    `<exercise><statement><p>First</p></statement></exercise>` +
+                    `</page>` +
+                    `<page>` +
+                    `<exercise><statement><p>Second</p></statement></exercise>` +
+                    `</page>` +
+                    `</worksheet>`
+            )
+        );
+    });
 });

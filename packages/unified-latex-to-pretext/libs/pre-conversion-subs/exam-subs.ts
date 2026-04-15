@@ -398,6 +398,18 @@ function questionsToExercises(
     env: Ast.Environment,
     _info: VisitInfo
 ): Ast.Node {
+    // Extract an optional \title{...} that appears before the first \question.
+    // cleanEnumerateBody keeps pre-item content in env.content, so \title{...}
+    // will appear with its {arg} already attached by the parser.
+    const titleMacro = env.content.find((n) =>
+        match.macro(n, "title")
+    ) as Ast.Macro | undefined;
+    const titleArg = titleMacro?.args?.find((a) => a.openMark === "{");
+    const titleElement =
+        titleArg && titleArg.content.length > 0
+            ? htmlLike({ tag: "title", content: titleArg.content })
+            : undefined;
+
     function extractTrailingPageBreak(bodyNodes: Ast.Node[]): {
         bodyNodes: Ast.Node[];
         breakAfter: boolean;
@@ -482,9 +494,10 @@ function questionsToExercises(
     }, []);
 
     if (!convertedQuestions.some((question) => question.breakAfter)) {
+        const exercises = convertedQuestions.map((question) => question.exercise);
         return htmlLike({
             tag: "worksheet",
-            content: convertedQuestions.map((question) => question.exercise),
+            content: titleElement ? [titleElement, ...exercises] : exercises,
         });
     }
 
@@ -511,7 +524,10 @@ function questionsToExercises(
     closePage();
 
     // Wrap all pages in a <worksheet> when explicit page breaks are present.
-    return htmlLike({ tag: "worksheet", content: pages });
+    return htmlLike({
+        tag: "worksheet",
+        content: titleElement ? [titleElement, ...pages] : pages,
+    });
 }
 
 /**
