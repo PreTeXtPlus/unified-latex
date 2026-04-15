@@ -38,7 +38,7 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises><exercise><statement><p>This is a question</p></statement></exercise></exercises>`
+                `<worksheet><exercise><statement><p>This is a question</p></statement></exercise></worksheet>`
             )
         );
     });
@@ -49,7 +49,7 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises><exercise points="5"><statement><p>This is a question</p></statement></exercise></exercises>`
+                `<worksheet><exercise points="5"><statement><p>This is a question</p></statement></exercise></worksheet>`
             )
         );
     });
@@ -60,10 +60,10 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise><statement><p>First</p></statement></exercise>` +
                     `<exercise><statement><p>Second</p></statement></exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
             )
         );
     });
@@ -74,13 +74,13 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise>` +
                     `<introduction><p>Here is the intro.</p></introduction>` +
                     `<task><statement><p>First part</p></statement></task>` +
                     `<task><statement><p>Second part</p></statement></task>` +
                     `</exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
             )
         );
     });
@@ -91,13 +91,13 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise points="10">` +
                     `<introduction><p>Intro text.</p></introduction>` +
                     `<task points="4"><statement><p>Part A</p></statement></task>` +
                     `<task points="6"><statement><p>Part B</p></statement></task>` +
                     `</exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
             )
         );
     });
@@ -108,12 +108,12 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise>` +
                     `<task><statement><p>First part</p></statement></task>` +
                     `<task><statement><p>Second part</p></statement></task>` +
                     `</exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
             )
         );
     });
@@ -124,7 +124,7 @@ describe("unified-latex-to-pretext:exam-class", () => {
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise>` +
                     `<introduction><p>Intro.</p></introduction>` +
                     `<task>` +
@@ -133,7 +133,7 @@ describe("unified-latex-to-pretext:exam-class", () => {
                     `<task><statement><p>Subpart B</p></statement></task>` +
                     `</task>` +
                     `</exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
             )
         );
     });
@@ -155,14 +155,14 @@ Second paragraph.\end{questions}`
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise>` +
                     `<statement>` +
                     `<p>First paragraph.</p>` +
                     `<p>Second paragraph.</p>` +
                     `</statement>` +
                     `</exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
             )
         );
     });
@@ -173,12 +173,128 @@ Second paragraph.\end{questions}`
         );
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(
-                `<exercises>` +
+                `<worksheet>` +
                     `<exercise>` +
                     `<statement><p>What is 1+1?</p></statement>` +
                     `<solution><p>It is 2.</p></solution>` +
                     `</exercise>` +
-                    `</exercises>`
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("converts trailing \\vfill into exercise workspace", async () => {
+        html = process(
+            String.raw`\begin{questions}\question First question\vfill\question Second question\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<exercise workspace="1in"><statement><p>First question</p></statement></exercise>` +
+                    `<exercise><statement><p>Second question</p></statement></exercise>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("converts trailing \\vskip into exercise workspace", async () => {
+        html = process(
+            String.raw`\begin{questions}\question First question\vskip 1in\question Second question\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<exercise workspace="1in"><statement><p>First question</p></statement></exercise>` +
+                    `<exercise><statement><p>Second question</p></statement></exercise>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("converts trailing \\vspace into exercise workspace", async () => {
+        html = process(
+            String.raw`\begin{questions}\question First question\vspace{1.5in}\question Second question\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<exercise workspace="1.5in"><statement><p>First question</p></statement></exercise>` +
+                    `<exercise><statement><p>Second question</p></statement></exercise>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("converts trailing spacer commands into task workspace", async () => {
+        html = process(
+            String.raw`\begin{questions}\question Intro.\begin{parts}\part First part\vfill\part Second part\vskip 2in\end{parts}\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<exercise>` +
+                    `<introduction><p>Intro.</p></introduction>` +
+                    `<task workspace="1in"><statement><p>First part</p></statement></task>` +
+                    `<task workspace="2in"><statement><p>Second part</p></statement></task>` +
+                    `</exercise>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("converts trailing \\vspace into task workspace", async () => {
+        html = process(
+            String.raw`\begin{questions}\question Intro.\begin{parts}\part First part\vspace{2.5in}\part Second part\end{parts}\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<exercise>` +
+                    `<introduction><p>Intro.</p></introduction>` +
+                    `<task workspace="2.5in"><statement><p>First part</p></statement></task>` +
+                    `<task><statement><p>Second part</p></statement></task>` +
+                    `</exercise>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("splits worksheet into pages on \\newpage", async () => {
+        html = process(
+            String.raw`\begin{questions}\question First\newpage\question Second\question Third\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<page>` +
+                    `<exercise><statement><p>First</p></statement></exercise>` +
+                    `</page>` +
+                    `<page>` +
+                    `<exercise><statement><p>Second</p></statement></exercise>` +
+                    `<exercise><statement><p>Third</p></statement></exercise>` +
+                    `</page>` +
+                    `</worksheet>`
+            )
+        );
+    });
+
+    it("splits worksheet into pages on \\clearpage and supports multiple breaks", async () => {
+        html = process(
+            String.raw`\begin{questions}\question First\clearpage\question Second\newpage\question Third\end{questions}`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<worksheet>` +
+                    `<page>` +
+                    `<exercise><statement><p>First</p></statement></exercise>` +
+                    `</page>` +
+                    `<page>` +
+                    `<exercise><statement><p>Second</p></statement></exercise>` +
+                    `</page>` +
+                    `<page>` +
+                    `<exercise><statement><p>Third</p></statement></exercise>` +
+                    `</page>` +
+                    `</worksheet>`
             )
         );
     });

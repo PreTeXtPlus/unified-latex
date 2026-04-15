@@ -16,6 +16,8 @@ import { environments as examCtnEnvironments } from "@unified-latex/unified-late
 import { wrapPars } from "../wrap-pars";
 import { trim } from "@unified-latex/unified-latex-util-trim";
 
+type HtmlAttributes = Record<string, string>;
+
 /**
  * Macro signatures for exam-class item macros.
  * All have an optional argument for point values, e.g. `\question[5]`.
@@ -135,6 +137,107 @@ function getItemBody(node: Ast.Macro): Ast.Node[] {
     return node.args[node.args.length - 1].content;
 }
 
+function isWhitespaceLike(node: Ast.Node): boolean {
+    return node.type === "whitespace" || node.type === "comment";
+}
+
+function isVfillMacro(node: Ast.Node): boolean {
+    return match.macro(node, "vfill") || match.macro(node, "vfil");
+}
+
+function isVspaceMacro(node: Ast.Node): boolean {
+    return match.macro(node, "vspace");
+}
+
+function getVspaceWorkspace(node: Ast.Macro): string | undefined {
+    const args = getArgsContent(node);
+    for (let i = args.length - 1; i >= 0; i--) {
+        const argContent = args[i];
+        if (!argContent || argContent.length === 0) {
+            continue;
+        }
+        const value = printRaw(argContent).trim();
+        if (value) {
+            return value;
+        }
+    }
+    return undefined;
+}
+
+function extractTrailingWorkspace(bodyNodes: Ast.Node[]): {
+    bodyNodes: Ast.Node[];
+    workspace?: string;
+} {
+    const remainingBody = [...bodyNodes];
+
+    while (
+        remainingBody.length > 0 &&
+        isWhitespaceLike(remainingBody[remainingBody.length - 1])
+    ) {
+        remainingBody.pop();
+    }
+
+    const lastNode = remainingBody[remainingBody.length - 1];
+    if (!lastNode) {
+        return { bodyNodes: remainingBody };
+    }
+
+    if (isVfillMacro(lastNode)) {
+        remainingBody.pop();
+        trim(remainingBody);
+        return { bodyNodes: remainingBody, workspace: "1in" };
+    }
+
+    if (isVspaceMacro(lastNode)) {
+        const workspace = getVspaceWorkspace(lastNode as Ast.Macro);
+        if (!workspace) {
+            return { bodyNodes: remainingBody };
+        }
+
+        remainingBody.pop();
+        trim(remainingBody);
+        return { bodyNodes: remainingBody, workspace };
+    }
+
+    if (lastNode.type !== "string") {
+        return { bodyNodes: remainingBody };
+    }
+
+    let index = remainingBody.length - 2;
+    while (index >= 0 && isWhitespaceLike(remainingBody[index])) {
+        index--;
+    }
+
+    const macroNode = remainingBody[index];
+    if (!macroNode || !match.macro(macroNode, "vskip")) {
+        return { bodyNodes: remainingBody };
+    }
+
+    const workspace = lastNode.content.trim();
+    if (!workspace) {
+        return { bodyNodes: remainingBody };
+    }
+
+    remainingBody.splice(index);
+    trim(remainingBody);
+    return { bodyNodes: remainingBody, workspace };
+}
+
+function getExamItemAttributes(node: Ast.Macro): {
+    attributes: HtmlAttributes;
+    bodyNodes: Ast.Node[];
+} {
+    const pointsAttributes = getPointsAttribute(node);
+    const { bodyNodes, workspace } = extractTrailingWorkspace(getItemBody(node));
+
+    return {
+        attributes: workspace
+            ? { ...pointsAttributes, workspace }
+            : pointsAttributes,
+        bodyNodes,
+    };
+}
+
 /**
  * Tags that are solution-like (not part of the statement body).
  * In PreTeXt, these are siblings of `<statement>`, not inside it.
@@ -174,6 +277,10 @@ function isTaskNode(node: Ast.Node): boolean {
     return match.macro(node, "html-tag:task");
 }
 
+function isPageBreakNode(node: Ast.Node): boolean {
+    return match.macro(node, "newpage") || match.macro(node, "clearpage");
+}
+
 /**
  * Build a `<task>` element from an item macro (`\part` or `\subpart`).
  * If the body contains converted sub-task nodes, the content before them
@@ -181,8 +288,7 @@ function isTaskNode(node: Ast.Node): boolean {
  * Otherwise the body is wrapped in a `<statement>`.
  */
 function buildTask(itemMacro: Ast.Macro): Ast.Node {
-    const attributes = getPointsAttribute(itemMacro);
-    const bodyNodes = getItemBody(itemMacro);
+    const { attributes, bodyNodes } = getExamItemAttributes(itemMacro);
 
     const firstTaskIndex = bodyNodes.findIndex(isTaskNode);
 
@@ -229,20 +335,22 @@ function subsubpartsToTasks(env: Ast.Environment): Ast.Node[] {
     const itemMacros = env.content.filter((node) =>
         match.macro(node, "subsubpart")
     );
-    return itemMacros.flatMap((node) => {
+    return itemMacros.reduce<Ast.Node[]>((tasks, node) => {
         if (!match.macro(node) || !node.args) {
-            return [];
+            return tasks;
         }
-        const attributes = getPointsAttribute(node);
-        const body = getItemBody(node);
-        return htmlLike({
-            tag: "task",
-            attributes,
-            content: [
-                htmlLike({ tag: "statement", content: wrapPars(body) }),
-            ],
-        });
-    });
+        const { attributes, bodyNodes } = getExamItemAttributes(node);
+        tasks.push(
+            htmlLike({
+                tag: "task",
+                attributes,
+                content: [
+                    htmlLike({ tag: "statement", content: wrapPars(bodyNodes) }),
+                ],
+            })
+        );
+        return tasks;
+    }, []);
 }
 
 /**
@@ -252,12 +360,13 @@ function subpartsToTasks(env: Ast.Environment): Ast.Node[] {
     const itemMacros = env.content.filter((node) =>
         match.macro(node, "subpart")
     );
-    return itemMacros.flatMap((node) => {
+    return itemMacros.reduce<Ast.Node[]>((tasks, node) => {
         if (!match.macro(node) || !node.args) {
-            return [];
+            return tasks;
         }
-        return buildTask(node);
-    });
+        tasks.push(buildTask(node));
+        return tasks;
+    }, []);
 }
 
 /**
@@ -267,12 +376,13 @@ function partsToTasks(env: Ast.Environment): Ast.Node[] {
     const itemMacros = env.content.filter((node) =>
         match.macro(node, "part")
     );
-    return itemMacros.flatMap((node) => {
+    return itemMacros.reduce<Ast.Node[]>((tasks, node) => {
         if (!match.macro(node) || !node.args) {
-            return [];
+            return tasks;
         }
-        return buildTask(node);
-    });
+        tasks.push(buildTask(node));
+        return tasks;
+    }, []);
 }
 
 /**
@@ -288,17 +398,35 @@ function questionsToExercises(
     env: Ast.Environment,
     _info: VisitInfo
 ): Ast.Node {
-    const questionMacros = env.content.filter((node) =>
-        match.macro(node, "question")
-    );
+    function extractTrailingPageBreak(bodyNodes: Ast.Node[]): {
+        bodyNodes: Ast.Node[];
+        breakAfter: boolean;
+    } {
+        const remainingBody = [...bodyNodes];
 
-    const exercises = questionMacros.flatMap((node) => {
-        if (!match.macro(node) || !node.args) {
-            return [];
+        while (
+            remainingBody.length > 0 &&
+            isWhitespaceLike(remainingBody[remainingBody.length - 1])
+        ) {
+            remainingBody.pop();
         }
 
-        const attributes = getPointsAttribute(node);
-        const bodyNodes = getItemBody(node);
+        const lastNode = remainingBody[remainingBody.length - 1];
+        if (!lastNode || !isPageBreakNode(lastNode)) {
+            return { bodyNodes: remainingBody, breakAfter: false };
+        }
+
+        remainingBody.pop();
+        trim(remainingBody);
+        return { bodyNodes: remainingBody, breakAfter: true };
+    }
+
+    function questionToExercise(node: Ast.Macro): {
+        exercise: Ast.Node;
+        breakAfter: boolean;
+    } {
+        const { attributes, bodyNodes: rawBodyNodes } = getExamItemAttributes(node);
+        const { bodyNodes, breakAfter } = extractTrailingPageBreak(rawBodyNodes);
         const firstTaskIndex = bodyNodes.findIndex(isTaskNode);
 
         let exerciseContent: Ast.Node[];
@@ -332,14 +460,58 @@ function questionsToExercises(
             exerciseContent.push(...taskNodes);
         }
 
-        return htmlLike({
-            tag: "exercise",
-            attributes,
-            content: exerciseContent,
-        });
-    });
+        return {
+            exercise: htmlLike({
+                tag: "exercise",
+                attributes,
+                content: exerciseContent,
+            }),
+            breakAfter,
+        };
+    }
 
-    return htmlLike({ tag: "exercises", content: exercises });
+    const convertedQuestions = env.content.reduce<
+        { exercise: Ast.Node; breakAfter: boolean }[]
+    >((items, node) => {
+        if (!match.macro(node, "question") || !node.args) {
+            return items;
+        }
+
+        items.push(questionToExercise(node));
+        return items;
+    }, []);
+
+    if (!convertedQuestions.some((question) => question.breakAfter)) {
+        return htmlLike({
+            tag: "worksheet",
+            content: convertedQuestions.map((question) => question.exercise),
+        });
+    }
+
+    const pages: Ast.Node[] = [];
+    let currentPageContent: Ast.Node[] = [];
+
+    const closePage = () => {
+        pages.push(
+            htmlLike({
+                tag: "page",
+                content: currentPageContent,
+            })
+        );
+        currentPageContent = [];
+    };
+
+    for (const question of convertedQuestions) {
+        currentPageContent.push(question.exercise);
+        if (question.breakAfter) {
+            closePage();
+        }
+    }
+
+    closePage();
+
+    // Wrap all pages in a <worksheet> when explicit page breaks are present.
+    return htmlLike({ tag: "worksheet", content: pages });
 }
 
 /**
