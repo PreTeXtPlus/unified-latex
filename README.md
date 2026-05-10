@@ -108,6 +108,28 @@ npm run publish
 
 to publish all workspaces.
 
+If you need to publish a forked package name, set `PACKAGE_NAME_OVERRIDE` before
+running `npm run package` for that workspace.
+
+For `@pretextbook/unified-latex-to-pretext`, this fork uses the GitHub Actions
+workflow `Publish Pretextbook Package`, which runs on tags matching
+`pretextbook-unified-latex-to-pretext-v*` and publishes with npm trusted
+publishing (`--provenance`).
+
+To publish from `pretextbook`:
+
+```sh
+git switch pretextbook
+npm version patch --no-git-tag-version -w packages/unified-latex-to-pretext
+git add packages/unified-latex-to-pretext/package.json package-lock.json
+git commit -m "chore(unified-latex-to-pretext): bump version"
+git push origin pretextbook
+
+VERSION=$(jq -r '.version' packages/unified-latex-to-pretext/package.json)
+git tag "pretextbook-unified-latex-to-pretext-v${VERSION}"
+git push origin "pretextbook-unified-latex-to-pretext-v${VERSION}"
+```
+
 ## Playground
 
 You use the [Playground](https://siefkenj.github.io/latex-parser-playground) to view
