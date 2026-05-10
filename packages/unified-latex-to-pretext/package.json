@@ -1,6 +1,6 @@
 {
-    "name": "@unified-latex/unified-latex-to-pretext",
-    "version": "1.8.4",
+    "name": "@pretextbook/unified-latex-to-pretext",
+    "version": "0.0.2",
     "description": "Convert a unified-latex AST to a PreTeXt XAST AST (for PreTeXt conversion)",
     "main": "dist/index.js",
     "type": "module",
@@ -65,12 +65,12 @@
         "compile:esm": "wireit",
         "demo": "npm run build && vite --config demo/vite.config.ts",
         "package": "node ../../scripts/make-package.mjs",
-        "publish": "cd dist && npm publish",
+        "publish": "cd dist && npm publish --provenance",
         "test": "vitest"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/siefkenj/unified-latex.git"
+        "url": "git+https://github.com/PreTeXtPlus/unified-latex.git"
     },
     "keywords": [
         "pegjs",
@@ -83,9 +83,9 @@
     "author": "Jason Siefken",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/siefkenj/unified-latex/issues"
+        "url": "https://github.com/PreTeXtPlus/unified-latex/issues"
     },
-    "homepage": "https://github.com/siefkenj/unified-latex#readme",
+    "homepage": "https://github.com/PreTeXtPlus/unified-latex#readme",
     "private": true,
     "wireit": {
         "compile": {

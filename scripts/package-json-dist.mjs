@@ -4,8 +4,12 @@
  *
  * @param {string} json - The package.json file contents
  */
-export function packageJsonDist(json) {
+export function packageJsonDist(
+    json,
+    options = {}
+) {
     const originalPackage = JSON.parse(json);
+    const { nameOverride } = options;
 
     /* eslint no-unused-vars: "off" */
 
@@ -44,6 +48,20 @@ export function packageJsonDist(json) {
     };
     distPackage.main = "index.js";
     distPackage.files = ["**/*ts", "**/*js", "**/*.map", "**/*.json"];
+
+    if (nameOverride) {
+        distPackage.name = nameOverride;
+    }
+
+    if (
+        typeof distPackage.name === "string" &&
+        distPackage.name.startsWith("@")
+    ) {
+        distPackage.publishConfig = {
+            ...(distPackage.publishConfig ?? {}),
+            access: "public",
+        };
+    }
 
     return JSON.stringify(distPackage, null, 4);
 }
