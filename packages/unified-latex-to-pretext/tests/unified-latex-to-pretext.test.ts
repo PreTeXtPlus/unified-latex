@@ -86,22 +86,30 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         );
     });
 
-    it("Comments are removed from HTML", async () => {
+    it("Comments are preserved as XML comments", async () => {
+        // A comment absorbs surrounding whitespace; a space is re-emitted
+        // when the LaTeX source would have rendered one.
         html = process(`a % foo\nb`);
-        expect(await normalizeHtml(html)).toEqual(await normalizeHtml(`a b`));
+        expect(html).toEqual(`a <!-- foo-->b`);
 
         html = process(`a% foo\nb`);
-        expect(await normalizeHtml(html)).toEqual(await normalizeHtml(`ab`));
+        expect(html).toEqual(`a<!-- foo-->b`);
+
+        // An own-line comment's line break acts as a space
+        html = process(`a\n% foo\nb`);
+        expect(html).toEqual(`a <!-- foo-->b`);
 
         html = process(`a% foo\n\nb`);
-        expect(await normalizeHtml(html)).toEqual(
-            await normalizeHtml(`<p>a</p><p>b</p>`)
-        );
+        expect(html).toEqual(`<p>a<!-- foo--></p><p>b</p>`);
 
-        html = process(`a % foo\n\nb`);
-        expect(await normalizeHtml(html)).toEqual(
-            await normalizeHtml(`<p>a</p><p>b</p>`)
-        );
+        // A comment alone between paragraphs is not wrapped in a <p>
+        html = process(`a\n\n% foo\n\nb`);
+        expect(html).toEqual(`<p>a</p> <!-- foo--><p>b</p>`);
+    });
+
+    it("Comments inside math are removed", async () => {
+        html = process(`\\[x %comment\n+ y\\]`);
+        expect(html).toEqual(`<md>x+ y</md>`);
     });
 
     it("Wraps URLs", async () => {
@@ -227,7 +235,27 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         );
         html = process(`a\n b\\begin{foo}x\\end{foo}c\n\nd`);
         expect(await normalizeHtml(html)).toEqual(
-            await normalizeHtml(`<p>a b</p>x<p>c</p><p>d</p>`)
+            await normalizeHtml(
+                `<p>a b</p><TODO type="unknown-environment"><!--todo: unknown environment "foo"--><pre>\\begin{foo}x\\end{foo}</pre></TODO><p>c</p><p>d</p>`
+            )
+        );
+    });
+
+    it("Unknown environments are preserved in a <TODO> placeholder", async () => {
+        html = process(`\\begin{fancybox}Some \\emph{content}\\end{fancybox}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<TODO type="unknown-environment"><!--todo: unknown environment "fancybox"--><pre>\\begin{fancybox}Some \\emph{content}\\end{fancybox}</pre></TODO>`
+            )
+        );
+    });
+
+    it("Unknown macros are preserved in a <TODO> placeholder", async () => {
+        html = process(`a \\fancymacro b`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `a <TODO type="unknown-macro"><!--todo: unknown macro "\\fancymacro"--><c>\\fancymacro</c></TODO> b`
+            )
         );
     });
 
@@ -283,7 +311,7 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
     it("replaces paragraphs", async () => {
         let ast;
 
-        ast = process(`\\paragraph{Important.} Paragraph`);
+        ast = process(`\\paragraphs{Important.} Paragraph`);
         expect(await normalizeHtml(ast)).toEqual(
             await normalizeHtml(
                 `<paragraphs><title>Important.</title> Paragraph</paragraphs>`
@@ -750,6 +778,28 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
             await normalizeHtml(`<worksheet><title>Lab 1</title><p>Do problems 1-5.</p></worksheet>`)
         );
     });
+    it("converts \\handout{title} macro to <handout>", async () => {
+        html = process(`\\handout{Class Handout}\n\nRead this before class.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<handout><title>Class Handout</title><p>Read this before class.</p></handout>`)
+        );
+    });
+    it("converts \\begin{handout} environment to <handout>", async () => {
+        html = process(`\\begin{handout}[Class Handout]\n\nRead this before class.\n\\end{handout}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<handout><title>Class Handout</title><p>Read this before class.</p></handout>`)
+        );
+    });
+    it("converts \\subsection[worksheet]{title} to a <worksheet> nested inside the enclosing <section>", async () => {
+        html = process(
+            `\\section{Sec}\n\nIntro.\n\n\\subsection[worksheet]{Lab 1}\n\nDo problems 1-5.`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<section><title>Sec</title><p>Intro.</p><worksheet><title>Lab 1</title><p>Do problems 1-5.</p></worksheet></section>`
+            )
+        );
+    });
     it("converts \\readingquestions{title} macro to <reading-questions>", async () => {
         html = process(`\\readingquestions{Reading Questions}\n\nWhat did you learn?`);
         expect(await normalizeHtml(html)).toEqual(
@@ -1037,6 +1087,28 @@ describe("unified-latex-to-pretext:unified-latex-to-pretext", () => {
         html = process(`\\worksheet{Lab 1}\n\nDo problems 1-5.`);
         expect(await normalizeHtml(html)).toEqual(
             await normalizeHtml(`<worksheet><title>Lab 1</title><p>Do problems 1-5.</p></worksheet>`)
+        );
+    });
+    it("converts \\handout{title} macro to <handout>", async () => {
+        html = process(`\\handout{Class Handout}\n\nRead this before class.`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<handout><title>Class Handout</title><p>Read this before class.</p></handout>`)
+        );
+    });
+    it("converts \\begin{handout} environment to <handout>", async () => {
+        html = process(`\\begin{handout}[Class Handout]\n\nRead this before class.\n\\end{handout}`);
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(`<handout><title>Class Handout</title><p>Read this before class.</p></handout>`)
+        );
+    });
+    it("converts \\subsection[worksheet]{title} to a <worksheet> nested inside the enclosing <section>", async () => {
+        html = process(
+            `\\section{Sec}\n\nIntro.\n\n\\subsection[worksheet]{Lab 1}\n\nDo problems 1-5.`
+        );
+        expect(await normalizeHtml(html)).toEqual(
+            await normalizeHtml(
+                `<section><title>Sec</title><p>Intro.</p><worksheet><title>Lab 1</title><p>Do problems 1-5.</p></worksheet></section>`
+            )
         );
     });
     it("converts \\readingquestions{title} macro to <reading-questions>", async () => {
