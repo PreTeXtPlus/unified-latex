@@ -229,8 +229,12 @@
     </div>
 
     <script type="module">
-        import { processLatexToAstViaUnified } from '@unified-latex/unified-latex';
-        import { convertToPretext } from '@unified-latex/unified-latex-to-pretext';
+        import { processLatexViaUnified } from '@unified-latex/unified-latex';
+        import {
+            unifiedLatexToPretext,
+            xmlCompilePlugin,
+        } from '@unified-latex/unified-latex-to-pretext';
+        import { formatPretext } from '@pretextbook/format';
 
         const inputEl = document.getElementById('input');
         const outputEl = document.getElementById('output');
@@ -239,7 +243,9 @@
         const convertBtn = document.getElementById('convert-btn');
         const copyBtn = document.getElementById('copy-btn');
         const clearBtn = document.getElementById('clear-btn');
-        const latexToAst = processLatexToAstViaUnified();
+        const latexToPretext = processLatexViaUnified()
+            .use(unifiedLatexToPretext, { producePretextFragment: true })
+            .use(xmlCompilePlugin);
 
         async function convert(latex) {
             try {
@@ -250,10 +256,10 @@
                 convertBtn.disabled = true;
                 convertBtn.textContent = 'Converting...';
 
-                const ast = latexToAst.processSync(latex).result;
-                const xml = convertToPretext(ast);
-                
-                outputEl.value = xml;
+                const xml = latexToPretext.processSync({ value: latex }).value;
+                const formatted = formatPretext(xml);
+
+                outputEl.value = formatted;
                 
                 statusEl.className = 'status success';
                 statusEl.textContent = '✓ Conversion successful';

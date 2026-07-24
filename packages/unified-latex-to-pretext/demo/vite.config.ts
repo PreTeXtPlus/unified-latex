@@ -12,12 +12,13 @@ export default defineConfig({
         open: true,
         middlewareMode: false,
         fs: {
-            allow: ['..'],
+            // Allow serving TypeScript source from all workspace packages
+            allow: [resolve(__dirname, '../../..')],
         },
     },
     resolve: {
         alias: {
-            '@unified-latex/unified-latex-to-pretext': resolve(__dirname, '../dist/index.js'),
+            '@unified-latex/unified-latex-to-pretext': resolve(__dirname, '../index.ts'),
         },
     },
     build: {
